@@ -1,0 +1,65 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "Node",
+"class": "ComputerStrategy",
+"language": "GDScript",
+"path": "res://src/ComputerStrategyReal.gd"
+}, {
+"base": "Node2D",
+"class": "Model",
+"language": "GDScript",
+"path": "res://src/Screens/Board.gd"
+}, {
+"base": "Node",
+"class": "QuantumGraph",
+"language": "GDScript",
+"path": "res://src/QuantumGraph.gd"
+}, {
+"base": "Node",
+"class": "QuantumNode",
+"language": "GDScript",
+"path": "res://src/QuantumNode.gd"
+}, {
+"base": "Node",
+"class": "Set",
+"language": "GDScript",
+"path": "res://src/Set.gd"
+} ]
+_global_script_class_icons={
+"ComputerStrategy": "",
+"Model": "",
+"QuantumGraph": "",
+"QuantumNode": "",
+"Set": ""
+}
+
+[application]
+
+config/name="MInimaxAlphaBeta"
+run/main_scene="res://src/Screens/Main.tscn"
+config/icon="res://icon.png"
+
+[autoload]
+
+GameState="*res://src/GameState.gd"
+
+[display]
+
+window/size/height=800
+
+[rendering]
+
+quality/driver/driver_name="GLES2"
+vram_compression/import_etc=true
+vram_compression/import_etc2=false
+environment/default_clear_color=Color( 0, 0, 0, 1 )
+environment/default_environment="res://default_env.tres"
