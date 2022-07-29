@@ -1,14 +1,17 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://src/Screens/Board.gd" type="Script" id=1]
 [ext_resource path="res://asset/grid.png" type="Texture" id=2]
 [ext_resource path="res://src/Cell.tscn" type="PackedScene" id=3]
+[ext_resource path="res://asset/tileBlue_02.png" type="Texture" id=4]
+[ext_resource path="res://asset/tileBlue_01.png" type="Texture" id=5]
 
 [node name="Board" type="Node2D"]
-position = Vector2( 211.171, 0 )
+position = Vector2( 245, 98 )
 script = ExtResource( 1 )
 
 [node name="Sprite" type="Sprite" parent="."]
+visible = false
 scale = Vector2( 1.38657, 1.38657 )
 texture = ExtResource( 2 )
 centered = false
@@ -29,34 +32,34 @@ position = Vector2( 506.36, 103.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell4" parent="." instance=ExtResource( 3 )]
-position = Vector2( 91.7682, 297.732 )
+position = Vector2( 91.7682, 305.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell5" parent="." instance=ExtResource( 3 )]
-position = Vector2( 299.253, 297.732 )
+position = Vector2( 299.253, 305.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell6" parent="." instance=ExtResource( 3 )]
-position = Vector2( 506.36, 297.732 )
+position = Vector2( 506.36, 305.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell7" parent="." instance=ExtResource( 3 )]
-position = Vector2( 91.7681, 491.522 )
+position = Vector2( 91.7681, 509.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell8" parent="." instance=ExtResource( 3 )]
-position = Vector2( 299.253, 491.522 )
+position = Vector2( 299.253, 509.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell9" parent="." instance=ExtResource( 3 )]
-position = Vector2( 506.36, 491.522 )
+position = Vector2( 506.36, 509.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="TextLabel" type="RichTextLabel" parent="."]
-margin_left = 182.0
-margin_top = 639.0
-margin_right = 471.0
-margin_bottom = 781.0
+margin_left = 602.0
+margin_top = 42.0
+margin_right = 891.0
+margin_bottom = 184.0
 text = "Hi
 "
 __meta__ = {
@@ -149,10 +152,10 @@ __meta__ = {
 }
 
 [node name="HistoryText" type="RichTextLabel" parent="."]
-margin_left = -170.171
+margin_left = -170.0
 margin_top = 220.0
-margin_right = -90.171
-margin_bottom = 615.0
+margin_right = -90.0
+margin_bottom = 526.0
 text = "
 "
 scroll_active = false
@@ -161,10 +164,10 @@ __meta__ = {
 }
 
 [node name="CycleLabel" type="RichTextLabel" parent="."]
-margin_left = 34.0
-margin_top = 639.0
-margin_right = 171.0
-margin_bottom = 789.0
+margin_left = -181.0
+margin_top = 535.0
+margin_right = -44.0
+margin_bottom = 685.0
 text = "cycle: false
 "
 __meta__ = {
@@ -181,3 +184,101 @@ text = "
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Sprite2" type="Sprite" parent="."]
+position = Vector2( 110.829, 209 )
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite8" type="Sprite" parent="."]
+position = Vector2( 189.829, 121 )
+rotation = 1.5708
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite9" type="Sprite" parent="."]
+position = Vector2( 189.829, 325 )
+rotation = 1.5708
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite10" type="Sprite" parent="."]
+position = Vector2( 189.829, 528 )
+rotation = 1.5708
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite4" type="Sprite" parent="."]
+position = Vector2( 317.829, 209 )
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite6" type="Sprite" parent="."]
+position = Vector2( 525.829, 209 )
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="SpriteCorner1" type="Sprite" parent="."]
+position = Vector2( 195.329, 204 )
+scale = Vector2( 0.460937, 0.4375 )
+texture = ExtResource( 5 )
+
+[node name="SpriteCorner2" type="Sprite" parent="."]
+position = Vector2( 403.829, 204 )
+scale = Vector2( 0.460937, 0.4375 )
+texture = ExtResource( 5 )
+
+[node name="Sprite3" type="Sprite" parent="."]
+position = Vector2( 110.829, 413 )
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite5" type="Sprite" parent="."]
+position = Vector2( 317.829, 413 )
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite7" type="Sprite" parent="."]
+position = Vector2( 525.829, 413 )
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="SpriteCorner3" type="Sprite" parent="."]
+position = Vector2( 195.329, 408 )
+scale = Vector2( 0.460937, 0.4375 )
+texture = ExtResource( 5 )
+
+[node name="SpriteCorner4" type="Sprite" parent="."]
+position = Vector2( 403.829, 408 )
+scale = Vector2( 0.460937, 0.4375 )
+texture = ExtResource( 5 )
+
+[node name="Sprite11" type="Sprite" parent="."]
+position = Vector2( 397.829, 121 )
+rotation = 1.5708
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite12" type="Sprite" parent="."]
+position = Vector2( 397.829, 325 )
+rotation = 1.5708
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Sprite13" type="Sprite" parent="."]
+position = Vector2( 397.829, 528 )
+rotation = 1.5708
+scale = Vector2( 0.744681, 0.636364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
