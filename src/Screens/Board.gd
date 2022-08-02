@@ -1,7 +1,6 @@
 class_name Model
 extends Node2D
 
-# These are not used yet
 var TURN_XA = 0
 var TURN_XB = 1
 var TURN_O_RESOLVE = 2
@@ -223,7 +222,7 @@ func play(cell: Area2D):
 	# Verify there is not already a classical move here
 	var cell_info = matrix[cell.board_index]
 	if !cell_info.is_quantum():
-		print("ERROR cannot make a move in a quantum spot ", cell.board_index)
+		print("ERROR cannot make a move in classical cell ", cell.board_index)
 		return true
 	
 	var new_move = create_move_instance(player_value())

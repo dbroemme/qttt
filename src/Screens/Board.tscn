@@ -185,100 +185,52 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Sprite2" type="Sprite" parent="."]
-position = Vector2( 110.829, 209 )
-scale = Vector2( 0.744681, 0.636364 )
+[node name="SpriteTopHorizontal" type="Sprite" parent="."]
+position = Vector2( 374.759, 208.554 )
+scale = Vector2( 2.95304, 0.261364 )
 texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
-[node name="Sprite8" type="Sprite" parent="."]
-position = Vector2( 189.829, 121 )
+[node name="SpriteBottomHorizontal" type="Sprite" parent="."]
+position = Vector2( 374, 403 )
+scale = Vector2( 2.95304, 0.261364 )
+texture = ExtResource( 4 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="SpriteLeftVertical" type="Sprite" parent="."]
+position = Vector2( 195.537, 379 )
 rotation = 1.5708
-scale = Vector2( 0.744681, 0.636364 )
+scale = Vector2( 2.91157, 0.307913 )
 texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
-[node name="Sprite9" type="Sprite" parent="."]
-position = Vector2( 189.829, 325 )
+[node name="SpriteRightVertical" type="Sprite" parent="."]
+position = Vector2( 395.477, 381 )
 rotation = 1.5708
-scale = Vector2( 0.744681, 0.636364 )
+scale = Vector2( 2.91157, 0.306267 )
 texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
-[node name="Sprite10" type="Sprite" parent="."]
-position = Vector2( 189.829, 528 )
-rotation = 1.5708
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="Sprite4" type="Sprite" parent="."]
-position = Vector2( 317.829, 209 )
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="Sprite6" type="Sprite" parent="."]
-position = Vector2( 525.829, 209 )
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="SpriteCorner1" type="Sprite" parent="."]
-position = Vector2( 195.329, 204 )
-scale = Vector2( 0.460937, 0.4375 )
+[node name="SpriteCornerNW" type="Sprite" parent="."]
+visible = false
+position = Vector2( 191.75, 201.75 )
+scale = Vector2( 0.207031, 0.191406 )
 texture = ExtResource( 5 )
 
-[node name="SpriteCorner2" type="Sprite" parent="."]
-position = Vector2( 403.829, 204 )
-scale = Vector2( 0.460937, 0.4375 )
+[node name="SpriteCornerNE" type="Sprite" parent="."]
+visible = false
+position = Vector2( 403, 202 )
+scale = Vector2( 0.207031, 0.191406 )
 texture = ExtResource( 5 )
 
-[node name="Sprite3" type="Sprite" parent="."]
-position = Vector2( 110.829, 413 )
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="Sprite5" type="Sprite" parent="."]
-position = Vector2( 317.829, 413 )
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="Sprite7" type="Sprite" parent="."]
-position = Vector2( 525.829, 413 )
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="SpriteCorner3" type="Sprite" parent="."]
-position = Vector2( 195.329, 408 )
-scale = Vector2( 0.460937, 0.4375 )
+[node name="SpriteCornerSE" type="Sprite" parent="."]
+visible = false
+position = Vector2( 403, 406 )
+scale = Vector2( 0.207031, 0.191406 )
 texture = ExtResource( 5 )
 
-[node name="SpriteCorner4" type="Sprite" parent="."]
-position = Vector2( 403.829, 408 )
-scale = Vector2( 0.460937, 0.4375 )
+[node name="SpriteCornerSW" type="Sprite" parent="."]
+visible = false
+position = Vector2( 192, 406 )
+scale = Vector2( 0.207031, 0.191406 )
 texture = ExtResource( 5 )
-
-[node name="Sprite11" type="Sprite" parent="."]
-position = Vector2( 397.829, 121 )
-rotation = 1.5708
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="Sprite12" type="Sprite" parent="."]
-position = Vector2( 397.829, 325 )
-rotation = 1.5708
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
-
-[node name="Sprite13" type="Sprite" parent="."]
-position = Vector2( 397.829, 528 )
-rotation = 1.5708
-scale = Vector2( 0.744681, 0.636364 )
-texture = ExtResource( 4 )
-offset = Vector2( -25.5143, -7.85715 )
