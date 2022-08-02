@@ -17,7 +17,25 @@ onready var cross_grey: = preload("res://asset/x_grey.png")
 onready var circle_grey: = preload("res://asset/o_grey.png")
 onready var cross_small: = preload("res://asset/x_grey_small.png")
 onready var circle_small: = preload("res://asset/o_grey_small.png")
+onready var player_x_small: = preload("res://asset/x_small.png")
+onready var player_o_small: = preload("res://asset/o_small.png")
+onready var player_x: = preload("res://asset/x.png")
+onready var player_o: = preload("res://asset/o.png")
 onready var quantum_cell_scene = preload("res://src/QuantumCell.tscn")
+
+onready var img_number_0: = preload("res://asset/number_0.png")
+onready var img_number_1: = preload("res://asset/number_1.png")
+onready var img_number_2: = preload("res://asset/number_2.png")
+onready var img_number_3: = preload("res://asset/number_3.png")
+onready var img_number_4: = preload("res://asset/number_4.png")
+onready var img_number_5: = preload("res://asset/number_5.png")
+onready var img_number_6: = preload("res://asset/number_6.png")
+onready var img_number_7: = preload("res://asset/number_7.png")
+onready var img_number_8: = preload("res://asset/number_8.png")
+onready var img_number_9: = preload("res://asset/number_9.png")
+onready var NUMBER_IMAGES = [img_number_0, img_number_1, img_number_2, img_number_3,
+					 img_number_4, img_number_5, img_number_6, img_number_7,
+					 img_number_8, img_number_9]
 
 const QuantumGraph = preload("../QuantumGraph.gd")
 const QuantumNode = preload("../QuantumNode.gd")
@@ -127,6 +145,12 @@ var visited_nodes: = 0
 # _init() and _ready()
 func _ready():
 	$HistoryText.text = ""
+	$TurnNumberInfo/Label.bbcode_text = "[center]Turn Number[center]"
+	$TurnPlayerInfo/Label.bbcode_text = "[center]Player Turn[center]"
+	$TurnDetailInfo/Label.bbcode_text = "[center]Move[center]"
+	$TurnDetailInfo/ValueSprite.texture = null
+	$TurnNumberInfo/ValueSprite.scale = Vector2(0.8, 0.8)
+	$TurnPlayerInfo/ValueSprite.scale = Vector2(0.5, 0.5)
 	quantum_graph = QuantumGraph.new()
 	matrix = []
 	move_key_list = []
@@ -144,8 +168,23 @@ func _ready():
 
 func _process(delta):
 	$ModeValue.text = TURN_DISPLAY[turn]
-	$TurnNumber.text = str(turn_number)
-	$PlayerLetter.text = player_letter()
+	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[turn_number]
+	if is_x_turn():
+		$TurnPlayerInfo/ValueSprite.texture = player_x
+	else:
+		$TurnPlayerInfo/ValueSprite.texture = player_o
+	if is_first_choice():
+		$LabelFirstMove.visible = true
+		$LabelSecondMove.visible = false
+		$LabelResolveMove.visible = false
+	elif is_resolve_mode():
+		$LabelFirstMove.visible = false
+		$LabelSecondMove.visible = false
+		$LabelResolveMove.visible = true		
+	else:
+		$LabelFirstMove.visible = false
+		$LabelSecondMove.visible = true
+		$LabelResolveMove.visible = false
 
 func get_classical_board():
 	var list = []
@@ -285,7 +324,7 @@ func check_for_collapse() -> bool:
 		var traverse = quantum_graph.is_cycle(move_key)
 		if traverse.is_cycle:
 			print(move_key, " caused a cycle")
-			$CycleLabel.text = "Need to resolve " + move_key
+			print("Need to resolve ", move_key)
 			$TextLabel.text = quantum_graph.to_display()
 			resolve_chain = traverse.list
 			print("The resolve chain is ", resolve_chain.size(), " items")
@@ -295,7 +334,7 @@ func check_for_collapse() -> bool:
 			return true
 		else:
 			cycle_display = cycle_display + move_key + ": " + str(traverse.is_cycle) + "\n"
-	$CycleLabel.text = cycle_display
+	print(cycle_display)
 	$TextLabel.text = quantum_graph.to_display()
 	for k in quantum_graph.forward_dict.keys():
 		$TextLabel.text = $TextLabel.text + "\n" + k
@@ -527,7 +566,7 @@ func on_cell_clicked(cell: Area2D):
 	if turn == TURN_X_RESOLVE:
 		if resolve_cells.contains(cell.board_index):
 			collapse_move(cell.board_index, resolve_key, true)
-			turn = TURN_XA
+			increment_turn()
 		else:
 			print("The cell ", cell.board_index, " is not a resolve cell")
 			display_nodes(resolve_cells)

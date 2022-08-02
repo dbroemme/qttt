@@ -4,29 +4,30 @@
 [ext_resource path="res://src/Cell.gd" type="Script" id=2]
 
 [sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 55.8409, 56.3841 )
+extents = Vector2( 63.8409, 63.4541 )
 
 [node name="Cell" type="Area2D" groups=["cells"]]
 position = Vector2( 60.1592, 56.476 )
 script = ExtResource( 2 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( 7.99995, 7.06995 )
 shape = SubResource( 1 )
 
 [node name="Sign" type="Sprite" parent="."]
 visible = false
 
 [node name="Placeholder" parent="." instance=ExtResource( 1 )]
-position = Vector2( -37.1592, -33.476 )
+position = Vector2( -31.1592, -33.476 )
 
 [node name="Highlight" type="Node2D" parent="."]
 visible = false
 
 [node name="ColorRect1" type="ColorRect" parent="Highlight"]
-margin_left = -60.1592
-margin_top = -56.476
-margin_right = 55.8408
-margin_bottom = -51.476
+margin_left = -60.0
+margin_top = -56.0
+margin_right = 72.0
+margin_bottom = -51.0
 color = Color( 0.388235, 0.431373, 0.482353, 1 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -34,9 +35,9 @@ __meta__ = {
 
 [node name="ColorRect2" type="ColorRect" parent="Highlight"]
 margin_left = -59.1592
-margin_top = 51.524
-margin_right = 56.8408
-margin_bottom = 56.524
+margin_top = 65.524
+margin_right = 68.8408
+margin_bottom = 70.524
 color = Color( 0.388235, 0.431373, 0.482353, 1 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -46,17 +47,17 @@ __meta__ = {
 margin_left = -60.0
 margin_top = -56.0
 margin_right = -54.0
-margin_bottom = 57.0
+margin_bottom = 71.0
 color = Color( 0.388235, 0.431373, 0.482353, 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="ColorRect4" type="ColorRect" parent="Highlight"]
-margin_left = 50.8408
-margin_top = -56.476
-margin_right = 56.8408
-margin_bottom = 56.524
+margin_left = 67.0
+margin_top = -56.0
+margin_right = 73.0
+margin_bottom = 71.0
 color = Color( 0.388235, 0.431373, 0.482353, 1 )
 __meta__ = {
 "_edit_use_anchors_": false

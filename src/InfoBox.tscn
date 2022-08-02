@@ -1,0 +1,76 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://asset/number_1.png" type="Texture" id=1]
+[ext_resource path="res://asset/Xolonium-Regular.ttf" type="DynamicFontData" id=2]
+
+[sub_resource type="DynamicFont" id=1]
+font_data = ExtResource( 2 )
+
+[node name="InfoBox" type="Node2D"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+margin_left = 1.0
+margin_top = 1.0
+margin_right = 166.0
+margin_bottom = 87.0
+color = Color( 0.796078, 0.92549, 0.862745, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TopHighlight" type="ColorRect" parent="."]
+margin_left = 1.0
+margin_right = 166.0
+margin_bottom = 5.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="BottomHighlight" type="ColorRect" parent="."]
+margin_left = 1.0
+margin_top = 82.0
+margin_right = 166.0
+margin_bottom = 87.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LeftHighlight" type="ColorRect" parent="."]
+margin_left = 1.0
+margin_top = 1.0
+margin_right = 5.0
+margin_bottom = 86.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RightHighlight" type="ColorRect" parent="."]
+margin_left = 162.0
+margin_top = 1.0
+margin_right = 166.0
+margin_bottom = 86.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="RichTextLabel" parent="."]
+margin_left = 6.0
+margin_top = 6.0
+margin_right = 161.0
+margin_bottom = 81.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_fonts/normal_font = SubResource( 1 )
+bbcode_enabled = true
+bbcode_text = "[center]label[center][center]"
+text = "label"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ValueSprite" type="Sprite" parent="."]
+position = Vector2( 83, 53 )
+texture = ExtResource( 1 )

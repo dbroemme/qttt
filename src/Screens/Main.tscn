@@ -26,8 +26,9 @@ margin_top = 79.803
 margin_right = 186.0
 margin_bottom = 158.803
 grow_horizontal = 2
+custom_colors/font_color = Color( 0.513726, 0.827451, 0.952941, 1 )
 custom_fonts/font = SubResource( 1 )
-text = "Tic Tac Toe"
+text = "Quantum Tic Tac Toe"
 align = 1
 valign = 1
 __meta__ = {
@@ -48,29 +49,31 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PvPButton" type="Button" parent="Menu"]
+[node name="PvCButton" type="Button" parent="Menu"]
 margin_right = 503.0
 margin_bottom = 71.0
 size_flags_vertical = 3
+custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
 custom_fonts/font = SubResource( 2 )
-text = "Player VS Player"
-script = ExtResource( 2 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="PvCButton" type="Button" parent="Menu"]
-margin_top = 96.0
-margin_right = 503.0
-margin_bottom = 167.0
-size_flags_vertical = 3
-custom_fonts/font = SubResource( 2 )
-text = "Player VS Computer"
+text = "Player the computer"
 script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 vs_computer = true
 
-[connection signal="button_up" from="Menu/PvPButton" to="Menu/PvPButton" method="_on_button_up"]
+[node name="PvPButton" type="Button" parent="Menu"]
+margin_top = 96.0
+margin_right = 503.0
+margin_bottom = 167.0
+size_flags_vertical = 3
+custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
+custom_fonts/font = SubResource( 2 )
+text = "Player another human"
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [connection signal="button_up" from="Menu/PvCButton" to="Menu/PvCButton" method="_on_button_up"]
+[connection signal="button_up" from="Menu/PvPButton" to="Menu/PvPButton" method="_on_button_up"]

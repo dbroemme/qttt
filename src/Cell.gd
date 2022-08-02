@@ -78,8 +78,8 @@ func modulate_all_but_key(key, cell_info):
 func add_quantum_cell(quantum_cell):
 	var x_extent = ($CollisionShape2D.shape.extents).x
 	var y_extent = ($CollisionShape2D.shape.extents).y
-	var x_base = -x_extent + 14
-	var y_base = -y_extent + 20
+	var x_base = -x_extent + 30
+	var y_base = -y_extent + 30
 	quantum_cells.append(quantum_cell)
 
 	# Reposition based on the number

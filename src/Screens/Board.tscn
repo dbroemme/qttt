@@ -1,10 +1,14 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://src/Screens/Board.gd" type="Script" id=1]
 [ext_resource path="res://asset/grid.png" type="Texture" id=2]
 [ext_resource path="res://src/Cell.tscn" type="PackedScene" id=3]
 [ext_resource path="res://asset/tileBlue_02.png" type="Texture" id=4]
-[ext_resource path="res://asset/tileBlue_01.png" type="Texture" id=5]
+[ext_resource path="res://asset/Montserrat-Bold.ttf" type="DynamicFontData" id=5]
+[ext_resource path="res://src/InfoBox.tscn" type="PackedScene" id=6]
+
+[sub_resource type="DynamicFont" id=1]
+font_data = ExtResource( 5 )
 
 [node name="Board" type="Node2D"]
 position = Vector2( 245, 98 )
@@ -24,90 +28,53 @@ position = Vector2( 91.7682, 103.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell2" parent="." instance=ExtResource( 3 )]
-position = Vector2( 299.799, 103.522 )
+position = Vector2( 288, 103.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell3" parent="." instance=ExtResource( 3 )]
-position = Vector2( 506.36, 103.522 )
+position = Vector2( 487, 103.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell4" parent="." instance=ExtResource( 3 )]
-position = Vector2( 91.7682, 305.732 )
+position = Vector2( 91.7682, 294.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell5" parent="." instance=ExtResource( 3 )]
-position = Vector2( 299.253, 305.732 )
+position = Vector2( 288, 294.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell6" parent="." instance=ExtResource( 3 )]
-position = Vector2( 506.36, 305.732 )
+position = Vector2( 487, 294.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell7" parent="." instance=ExtResource( 3 )]
-position = Vector2( 91.7681, 509.522 )
+position = Vector2( 91.7681, 487.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell8" parent="." instance=ExtResource( 3 )]
-position = Vector2( 299.253, 509.522 )
+position = Vector2( 288, 487.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell9" parent="." instance=ExtResource( 3 )]
-position = Vector2( 506.36, 509.522 )
+position = Vector2( 487, 487.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="TextLabel" type="RichTextLabel" parent="."]
 margin_left = 602.0
 margin_top = 42.0
-margin_right = 891.0
-margin_bottom = 184.0
+margin_right = 783.0
+margin_bottom = 502.0
 text = "Hi
 "
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TurnLabel" type="RichTextLabel" parent="."]
-margin_left = -170.0
-margin_top = 34.0
-margin_right = -40.0
-margin_bottom = 49.0
-text = "Turn Number
-"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="HistoryLabel" type="RichTextLabel" parent="."]
-margin_left = -170.171
-margin_top = 187.0
-margin_right = -40.171
-margin_bottom = 202.0
-text = "Move History
-
-"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="PlayerLabel" type="RichTextLabel" parent="."]
-margin_left = -169.171
-margin_top = 91.0
-margin_right = -39.171
-margin_bottom = 106.0
-text = "Player
-"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
 [node name="ModeLabel" type="RichTextLabel" parent="."]
-margin_left = -170.171
-margin_top = 136.0
-margin_right = -40.171
-margin_bottom = 151.0
+margin_left = -193.0
+margin_top = 306.0
+margin_right = -63.0
+margin_bottom = 321.0
 text = "Mode
 "
 scroll_active = false
@@ -116,35 +83,11 @@ __meta__ = {
 }
 
 [node name="ModeValue" type="RichTextLabel" parent="."]
-margin_left = -170.171
-margin_top = 157.0
-margin_right = -40.171
-margin_bottom = 172.0
+margin_left = -193.0
+margin_top = 327.0
+margin_right = -63.0
+margin_bottom = 342.0
 text = "
-"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="PlayerLetter" type="RichTextLabel" parent="."]
-margin_left = -170.171
-margin_top = 109.0
-margin_right = -40.171
-margin_bottom = 124.0
-text = "X
-"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="TurnNumber" type="RichTextLabel" parent="."]
-margin_left = -170.171
-margin_top = 53.0
-margin_right = -90.171
-margin_bottom = 69.0
-text = "1
 "
 scroll_active = false
 __meta__ = {
@@ -152,24 +95,13 @@ __meta__ = {
 }
 
 [node name="HistoryText" type="RichTextLabel" parent="."]
-margin_left = -170.0
-margin_top = 220.0
-margin_right = -90.0
-margin_bottom = 526.0
+margin_left = -206.0
+margin_top = 365.0
+margin_right = -126.0
+margin_bottom = 671.0
 text = "
 "
 scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="CycleLabel" type="RichTextLabel" parent="."]
-margin_left = -181.0
-margin_top = 535.0
-margin_right = -44.0
-margin_bottom = 685.0
-text = "cycle: false
-"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -211,26 +143,53 @@ scale = Vector2( 2.91157, 0.306267 )
 texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
-[node name="SpriteCornerNW" type="Sprite" parent="."]
-visible = false
-position = Vector2( 191.75, 201.75 )
-scale = Vector2( 0.207031, 0.191406 )
-texture = ExtResource( 5 )
+[node name="TurnNumberInfo" parent="." instance=ExtResource( 6 )]
+position = Vector2( -224, -78 )
 
-[node name="SpriteCornerNE" type="Sprite" parent="."]
-visible = false
-position = Vector2( 403, 202 )
-scale = Vector2( 0.207031, 0.191406 )
-texture = ExtResource( 5 )
+[node name="TurnPlayerInfo" parent="." instance=ExtResource( 6 )]
+position = Vector2( -53, -78 )
 
-[node name="SpriteCornerSE" type="Sprite" parent="."]
-visible = false
-position = Vector2( 403, 406 )
-scale = Vector2( 0.207031, 0.191406 )
-texture = ExtResource( 5 )
+[node name="TurnDetailInfo" parent="." instance=ExtResource( 6 )]
+position = Vector2( 118, -78 )
 
-[node name="SpriteCornerSW" type="Sprite" parent="."]
+[node name="LabelFirstMove" type="RichTextLabel" parent="."]
 visible = false
-position = Vector2( 192, 406 )
-scale = Vector2( 0.207031, 0.191406 )
-texture = ExtResource( 5 )
+margin_left = 140.0
+margin_top = -43.0
+margin_right = 287.0
+margin_bottom = -3.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_fonts/mono_font = SubResource( 1 )
+text = "1st quantum move
+"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LabelSecondMove" type="RichTextLabel" parent="."]
+visible = false
+margin_left = 140.0
+margin_top = -24.0
+margin_right = 286.0
+margin_bottom = 16.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_fonts/mono_font = SubResource( 1 )
+text = "2nd quantum move
+"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LabelResolveMove" type="RichTextLabel" parent="."]
+visible = false
+margin_left = 141.0
+margin_top = -34.0
+margin_right = 287.0
+margin_bottom = 6.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_fonts/mono_font = SubResource( 1 )
+text = "Resolve conflict
+"
+__meta__ = {
+"_edit_use_anchors_": false
+}
