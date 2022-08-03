@@ -112,12 +112,12 @@ func add_quantum_cell(quantum_cell, is_x_turn):
 
 func _on_mouse_entered():
 	if not classical:
-		Input.set_default_cursor_shape(2)
+		#Input.set_default_cursor_shape(2)
 		emit_signal("focus", self)
 
 func _on_mouse_exited():
 	if not classical:
-		Input.set_default_cursor_shape(0)
+		#Input.set_default_cursor_shape(0)
 		if get_parent().is_resolve_mode():
 			if get_parent().resolve_cells.contains(board_index):
 				# TODO we just want to clear the focus on the one quantum cell

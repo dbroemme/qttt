@@ -20,9 +20,6 @@ margin_left = 1.0
 margin_right = 166.0
 margin_bottom = 5.0
 color = Color( 0.392157, 0.631373, 0.803922, 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="BottomHighlight" type="ColorRect" parent="."]
 margin_left = 1.0
@@ -40,9 +37,6 @@ margin_top = 1.0
 margin_right = 5.0
 margin_bottom = 86.0
 color = Color( 0.392157, 0.631373, 0.803922, 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="RightHighlight" type="ColorRect" parent="."]
 margin_left = 162.0

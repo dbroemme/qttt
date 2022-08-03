@@ -29,42 +29,43 @@ __meta__ = {
 }
 
 [node name="Cell1" parent="." instance=ExtResource( 3 )]
-position = Vector2( 91.7682, 103.522 )
+position = Vector2( 45.7682, 103.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell2" parent="." instance=ExtResource( 3 )]
-position = Vector2( 288, 103.522 )
+position = Vector2( 242, 103.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell3" parent="." instance=ExtResource( 3 )]
-position = Vector2( 487, 103.522 )
+position = Vector2( 441, 103.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell4" parent="." instance=ExtResource( 3 )]
-position = Vector2( 91.7682, 294.732 )
+position = Vector2( 45.7682, 294.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell5" parent="." instance=ExtResource( 3 )]
-position = Vector2( 288, 294.732 )
+position = Vector2( 242, 294.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell6" parent="." instance=ExtResource( 3 )]
-position = Vector2( 487, 294.732 )
+position = Vector2( 441, 294.732 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell7" parent="." instance=ExtResource( 3 )]
-position = Vector2( 91.7681, 487.522 )
+position = Vector2( 45.7681, 487.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell8" parent="." instance=ExtResource( 3 )]
-position = Vector2( 288, 487.522 )
+position = Vector2( 242, 487.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="Cell9" parent="." instance=ExtResource( 3 )]
-position = Vector2( 487, 487.522 )
+position = Vector2( 441, 487.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="TextLabel" type="RichTextLabel" parent="."]
+visible = false
 margin_left = -220.0
 margin_top = 27.0
 margin_right = 10.0
@@ -73,6 +74,7 @@ text = "Hi
 "
 
 [node name="ModeLabel" type="RichTextLabel" parent="."]
+visible = false
 margin_left = 601.0
 margin_top = 33.0
 margin_right = 731.0
@@ -82,6 +84,7 @@ text = "Mode
 scroll_active = false
 
 [node name="ModeValue" type="RichTextLabel" parent="."]
+visible = false
 margin_left = 602.0
 margin_top = 62.0
 margin_right = 732.0
@@ -110,26 +113,26 @@ text = "
 "
 
 [node name="SpriteTopHorizontal" type="Sprite" parent="."]
-position = Vector2( 374.759, 208.554 )
+position = Vector2( 328.759, 208.554 )
 scale = Vector2( 2.95304, 0.261364 )
 texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
 [node name="SpriteBottomHorizontal" type="Sprite" parent="."]
-position = Vector2( 374, 403 )
+position = Vector2( 328, 403 )
 scale = Vector2( 2.95304, 0.261364 )
 texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
 [node name="SpriteLeftVertical" type="Sprite" parent="."]
-position = Vector2( 195.537, 379 )
+position = Vector2( 149.537, 379 )
 rotation = 1.5708
 scale = Vector2( 2.91157, 0.307913 )
 texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
 [node name="SpriteRightVertical" type="Sprite" parent="."]
-position = Vector2( 395.477, 381 )
+position = Vector2( 349.477, 381 )
 rotation = 1.5708
 scale = Vector2( 2.91157, 0.306267 )
 texture = ExtResource( 4 )
@@ -264,8 +267,36 @@ custom_fonts/mono_font = SubResource( 1 )
 bbcode_enabled = true
 
 [node name="BoardCamera" type="Camera2D" parent="."]
-position = Vector2( 256, 300 )
+position = Vector2( 256, 299 )
 current = true
 script = ExtResource( 8 )
 
 [node name="AudioPlayer" type="AudioStreamPlayer2D" parent="."]
+
+[node name="TopHighlight" type="ColorRect" parent="."]
+margin_left = -223.0
+margin_top = 17.0
+margin_right = 732.0
+margin_bottom = 22.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="BottomHighlight" type="ColorRect" parent="."]
+margin_left = -223.0
+margin_top = 587.0
+margin_right = 732.0
+margin_bottom = 591.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="LeftHighlight" type="ColorRect" parent="."]
+margin_left = -223.0
+margin_top = 20.0
+margin_right = -219.0
+margin_bottom = 589.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="RightHighlight" type="ColorRect" parent="."]
+margin_left = 728.0
+margin_top = 21.0
+margin_right = 732.0
+margin_bottom = 590.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
