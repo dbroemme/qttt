@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/ComputerFirstMove.ogg-b7b25a6bd5ca8be1b083b8e166a8297d.oggstr"
+
+[deps]
+
+source_file="res://asset/audio/ComputerFirstMove.ogg"
+dest_files=[ "res://.import/ComputerFirstMove.ogg-b7b25a6bd5ca8be1b083b8e166a8297d.oggstr" ]
+
+[params]
+
+loop=false
+loop_offset=0

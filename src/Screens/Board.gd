@@ -14,6 +14,12 @@ var message_1 = ""
 var message_2 = ""
 var current_cell_focus = -1
 
+var first_move_sound = preload("res://asset/audio/FirstMove.ogg")
+var second_move_sound = preload("res://asset/audio/SecondMove.ogg")
+var computer_first_move_sound = preload("res://asset/audio/ComputerFirstMove.ogg")
+var computer_second_move_sound = preload("res://asset/audio/ComputerSecondMove.ogg")
+var resolve_sound = preload("res://asset/audio/ResolveSound.ogg")
+
 onready var cross_quantum: = preload("res://asset/x_small.png")
 onready var circle_quantum: = preload("res://asset/o_small.png")
 onready var cross_grey: = preload("res://asset/x_grey.png")
@@ -243,27 +249,38 @@ func increment_turn():
 				make_computer_move()
 		elif turn == TURN_OA or turn == TURN_OB:
 			turn = TURN_X_RESOLVE
+			$AudioPlayer.stream = resolve_sound
+			$AudioPlayer.play()
 			add_message("so you get to choose which spot they should take")
-			add_message("O has chosen a move resulting in a conflict.")
+			add_message("The computer chose a move resulting in a conflict.")
+			$BoardCamera.add_trauma(0.5)
 		else:
 			print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
 	else:
 		if turn == TURN_XA:
 			turn = TURN_XB
+			$AudioPlayer.stream = first_move_sound
+			$AudioPlayer.play()
 			add_message("")
 			add_message("Now make your second quantum move")
 		elif turn == TURN_XB or turn == TURN_O_RESOLVE:
 			turn = TURN_OA
 			turn_number = turn_number + 1
+			$AudioPlayer.stream = second_move_sound
+			$AudioPlayer.play()
 			add_message("")
 			add_message("Now it is the computers turn")
 		elif turn == TURN_OA:
+			$AudioPlayer.stream = computer_first_move_sound
+			$AudioPlayer.play()
 			turn = TURN_OB
 			add_message("")
 			add_message("The computer made its first move, now the second ...")
 		elif turn == TURN_OB or turn == TURN_X_RESOLVE:
 			turn = TURN_XA
 			turn_number = turn_number + 1
+			$AudioPlayer.stream = computer_second_move_sound
+			$AudioPlayer.play()
 			add_message("Make your first quantum move")
 			add_message("It is your turn again")
 		elif turn == TURN_GAME_OVER:

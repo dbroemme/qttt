@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://src/Screens/Board.gd" type="Script" id=1]
 [ext_resource path="res://asset/grid.png" type="Texture" id=2]
@@ -7,6 +7,7 @@
 [ext_resource path="res://asset/Montserrat-Bold.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://src/InfoBox.tscn" type="PackedScene" id=6]
 [ext_resource path="res://asset/Xolonium-Regular.ttf" type="DynamicFontData" id=7]
+[ext_resource path="res://src/Screens/BoardCamera.gd" type="Script" id=8]
 
 [sub_resource type="DynamicFont" id=1]
 font_data = ExtResource( 5 )
@@ -264,3 +265,10 @@ margin_bottom = 2.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/mono_font = SubResource( 1 )
 bbcode_enabled = true
+
+[node name="BoardCamera" type="Camera2D" parent="."]
+position = Vector2( 256, 300 )
+current = true
+script = ExtResource( 8 )
+
+[node name="AudioPlayer" type="AudioStreamPlayer2D" parent="."]

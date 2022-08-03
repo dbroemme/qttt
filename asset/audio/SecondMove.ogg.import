@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/SecondMove.ogg-38ef413447097c488d585070f5aa356d.oggstr"
+
+[deps]
+
+source_file="res://asset/audio/SecondMove.ogg"
+dest_files=[ "res://.import/SecondMove.ogg-38ef413447097c488d585070f5aa356d.oggstr" ]
+
+[params]
+
+loop=false
+loop_offset=0
