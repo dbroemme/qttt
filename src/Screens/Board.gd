@@ -243,17 +243,17 @@ func update_move_history(board_index):
 func increment_turn():
 	current_cell_focus = -1
 	if check_for_collapse():
+		$AudioPlayer.stream = resolve_sound
+		$AudioPlayer.play()
+		$BoardCamera.add_trauma(0.5)
 		if turn == TURN_XA or turn == TURN_XB:
 			turn = TURN_O_RESOLVE
 			if GameState.vs_computer:
 				make_computer_move()
 		elif turn == TURN_OA or turn == TURN_OB:
 			turn = TURN_X_RESOLVE
-			$AudioPlayer.stream = resolve_sound
-			$AudioPlayer.play()
 			add_message("so you get to choose which spot they should take")
 			add_message("The computer chose a move resulting in a conflict.")
-			$BoardCamera.add_trauma(0.5)
 		else:
 			print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
 	else:
@@ -351,7 +351,7 @@ func make_move(cell: Area2D, cell_info, new_move):
 		new_quantum_sign.visible = true
 		new_quantum_sign.texture = circle_quantum
 
-	cell.add_quantum_cell(new_quantum_scene)
+	cell.add_quantum_cell(new_quantum_scene, is_x_turn())
 	if is_first_choice():
 		move_key_list.append(new_move.key())
 

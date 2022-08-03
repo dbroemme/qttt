@@ -5,10 +5,12 @@ signal focus
 
 onready var cross: = preload("res://asset/x.png")
 onready var circle: = preload("res://asset/o.png")
+onready var particle_scene = preload("res://src/ParticleEffect.tscn")
 
 var board_index
 var quantum_cells
 var classical
+var new_particle_effect
 
 func _ready():
 	board_index = -1
@@ -75,7 +77,7 @@ func modulate_all_but_key(key, cell_info):
 			qc.is_modulated = true
 		count = count + 1
 	
-func add_quantum_cell(quantum_cell):
+func add_quantum_cell(quantum_cell, is_x_turn):
 	var x_extent = ($CollisionShape2D.shape.extents).x
 	var y_extent = ($CollisionShape2D.shape.extents).y
 	var x_base = -x_extent + 30
@@ -97,6 +99,16 @@ func add_quantum_cell(quantum_cell):
 			row_number = row_number + 1
 	$Placeholder.position.x = x_base + (column_number * 36)
 	$Placeholder.position.y = y_base + (row_number * 36)
+
+	# Add animation for juice
+	new_particle_effect = particle_scene.instance()
+		
+	new_particle_effect.position.x = $Placeholder.position.x - 36
+	new_particle_effect.position.y = $Placeholder.position.y
+	new_particle_effect.frame = 0
+	add_child(new_particle_effect)
+	new_particle_effect.show()
+	new_particle_effect.playing = true
 
 func _on_mouse_entered():
 	if not classical:
@@ -120,3 +132,8 @@ func _on_input_event(_viewport, event, _shape_idx):
 			if event.button_index == BUTTON_LEFT and event.pressed:
 				emit_signal("clicked", self)
 
+
+
+func _on_ParticleAnimatedSprite_animation_finished():
+	new_particle_effect.playing = false
+	new_particle_effect.hide()
