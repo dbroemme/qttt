@@ -44,7 +44,7 @@ _global_script_class_icons={
 
 [application]
 
-config/name="MInimaxAlphaBeta"
+config/name="Quantum Tic Tac Toe"
 run/main_scene="res://src/Screens/Main.tscn"
 config/icon="res://icon.png"
 

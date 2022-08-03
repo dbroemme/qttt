@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://src/Screens/Board.gd" type="Script" id=1]
 [ext_resource path="res://asset/grid.png" type="Texture" id=2]
@@ -6,12 +6,16 @@
 [ext_resource path="res://asset/tileBlue_02.png" type="Texture" id=4]
 [ext_resource path="res://asset/Montserrat-Bold.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://src/InfoBox.tscn" type="PackedScene" id=6]
+[ext_resource path="res://asset/Xolonium-Regular.ttf" type="DynamicFontData" id=7]
 
 [sub_resource type="DynamicFont" id=1]
 font_data = ExtResource( 5 )
 
+[sub_resource type="DynamicFont" id=2]
+font_data = ExtResource( 7 )
+
 [node name="Board" type="Node2D"]
-position = Vector2( 245, 98 )
+position = Vector2( 256, 98 )
 script = ExtResource( 1 )
 
 [node name="Sprite" type="Sprite" parent="."]
@@ -60,10 +64,10 @@ position = Vector2( 487, 487.522 )
 scale = Vector2( 1.25, 1.25 )
 
 [node name="TextLabel" type="RichTextLabel" parent="."]
-margin_left = 602.0
-margin_top = 42.0
-margin_right = 783.0
-margin_bottom = 502.0
+margin_left = -220.0
+margin_top = 27.0
+margin_right = 10.0
+margin_bottom = 487.0
 text = "Hi
 "
 __meta__ = {
@@ -71,51 +75,41 @@ __meta__ = {
 }
 
 [node name="ModeLabel" type="RichTextLabel" parent="."]
-margin_left = -193.0
-margin_top = 306.0
-margin_right = -63.0
-margin_bottom = 321.0
+margin_left = 601.0
+margin_top = 33.0
+margin_right = 731.0
+margin_bottom = 48.0
 text = "Mode
 "
 scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="ModeValue" type="RichTextLabel" parent="."]
-margin_left = -193.0
-margin_top = 327.0
-margin_right = -63.0
+margin_left = 602.0
+margin_top = 62.0
+margin_right = 732.0
+margin_bottom = 77.0
+text = "
+"
+scroll_active = false
+
+[node name="HistoryText" type="RichTextLabel" parent="."]
+visible = false
+margin_left = 613.0
+margin_top = 36.0
+margin_right = 727.0
 margin_bottom = 342.0
 text = "
 "
 scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="HistoryText" type="RichTextLabel" parent="."]
-margin_left = -206.0
-margin_top = 365.0
-margin_right = -126.0
-margin_bottom = 671.0
-text = "
-"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="WinLabel" type="RichTextLabel" parent="."]
+visible = false
 margin_left = 496.0
 margin_top = 637.0
 margin_right = 579.0
 margin_bottom = 787.0
 text = "
 "
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="SpriteTopHorizontal" type="Sprite" parent="."]
 position = Vector2( 374.759, 208.554 )
@@ -152,33 +146,44 @@ position = Vector2( -53, -78 )
 [node name="TurnDetailInfo" parent="." instance=ExtResource( 6 )]
 position = Vector2( 118, -78 )
 
-[node name="LabelFirstMove" type="RichTextLabel" parent="."]
+[node name="BackgroundFirstMove" type="ColorRect" parent="."]
 visible = false
-margin_left = 140.0
-margin_top = -43.0
-margin_right = 287.0
+modulate = Color( 1, 1, 1, 0.470588 )
+margin_left = 137.0
+margin_top = -48.0
+margin_right = 268.0
+margin_bottom = -26.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="BackgroundSecondMove" type="ColorRect" parent="."]
+visible = false
+modulate = Color( 1, 1, 1, 0.470588 )
+margin_left = 137.0
+margin_top = -25.0
+margin_right = 268.0
 margin_bottom = -3.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="LabelFirstMove" type="RichTextLabel" parent="."]
+margin_left = 161.0
+margin_top = -44.0
+margin_right = 262.0
+margin_bottom = -4.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/mono_font = SubResource( 1 )
-text = "1st quantum move
+text = "Quantum #1
 "
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="LabelSecondMove" type="RichTextLabel" parent="."]
 visible = false
-margin_left = 140.0
-margin_top = -24.0
-margin_right = 286.0
-margin_bottom = 16.0
+margin_left = 161.0
+margin_top = -20.0
+margin_right = 307.0
+margin_bottom = 20.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/mono_font = SubResource( 1 )
-text = "2nd quantum move
+text = "Quantum #2
 "
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="LabelResolveMove" type="RichTextLabel" parent="."]
 visible = false
@@ -188,8 +193,74 @@ margin_right = 287.0
 margin_bottom = 6.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/mono_font = SubResource( 1 )
-text = "Resolve conflict
+text = "Resolve the conflict
 "
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="MessagesRect" type="ColorRect" parent="."]
+margin_left = 291.0
+margin_top = -76.0
+margin_right = 732.0
+margin_bottom = 10.0
+color = Color( 0.796078, 0.92549, 0.862745, 1 )
+
+[node name="MessagesTopHighlight" type="ColorRect" parent="."]
+margin_left = 291.0
+margin_top = -77.0
+margin_right = 732.0
+margin_bottom = -72.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="MessagesBottomHighlight" type="ColorRect" parent="."]
+margin_left = 291.0
+margin_top = 5.0
+margin_right = 728.0
+margin_bottom = 10.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="MessagesLeftHighlight" type="ColorRect" parent="."]
+margin_left = 291.0
+margin_top = -76.0
+margin_right = 295.0
+margin_bottom = 9.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="MessagesRightHighlight" type="ColorRect" parent="."]
+margin_left = 728.0
+margin_top = -73.0
+margin_right = 732.0
+margin_bottom = 10.0
+color = Color( 0.392157, 0.631373, 0.803922, 1 )
+
+[node name="MessagesDisplayLabel" type="RichTextLabel" parent="."]
+margin_left = 299.0
+margin_top = -72.0
+margin_right = 724.0
+margin_bottom = 3.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_fonts/normal_font = SubResource( 2 )
+bbcode_enabled = true
+bbcode_text = "[center]Messages[center]
+"
+text = "Messages
+"
+
+[node name="MessagesLabel1" type="RichTextLabel" parent="."]
+margin_left = 304.0
+margin_top = -43.0
+margin_right = 718.0
+margin_bottom = -19.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_fonts/mono_font = SubResource( 1 )
+bbcode_enabled = true
+
+[node name="MessagesLabel2" type="RichTextLabel" parent="."]
+margin_left = 304.0
+margin_top = -22.0
+margin_right = 719.0
+margin_bottom = 2.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_fonts/mono_font = SubResource( 1 )
+bbcode_enabled = true

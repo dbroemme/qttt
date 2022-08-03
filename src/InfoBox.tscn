@@ -14,9 +14,6 @@ margin_top = 1.0
 margin_right = 166.0
 margin_bottom = 87.0
 color = Color( 0.796078, 0.92549, 0.862745, 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="TopHighlight" type="ColorRect" parent="."]
 margin_left = 1.0

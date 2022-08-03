@@ -10,6 +10,9 @@ var TURN_X_RESOLVE = 5
 var TURN_GAME_OVER = 6
 var turn
 var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER"]
+var message_1 = ""
+var message_2 = ""
+var current_cell_focus = -1
 
 onready var cross_quantum: = preload("res://asset/x_small.png")
 onready var circle_quantum: = preload("res://asset/o_small.png")
@@ -141,7 +144,13 @@ var computer_strategy
 var stats = {}
 var visited_nodes: = 0
 
+func add_message(text_value):
+	message_2 = message_1
+	message_1 = text_value
+	$MessagesLabel1.bbcode_text = "[center]" + message_1 + "[center]"	
+	$MessagesLabel2.bbcode_text = "[center]" + message_2 + "[center]"	
 
+	
 # _init() and _ready()
 func _ready():
 	$HistoryText.text = ""
@@ -151,6 +160,16 @@ func _ready():
 	$TurnDetailInfo/ValueSprite.texture = null
 	$TurnNumberInfo/ValueSprite.scale = Vector2(0.8, 0.8)
 	$TurnPlayerInfo/ValueSprite.scale = Vector2(0.5, 0.5)
+	$MessagesLabel1.get_child(0).modulate.a = 0
+	$MessagesLabel2.get_child(0).modulate.a = 0
+	
+	# Bootstrap the turn related display elements
+	# This then gets adjusted in the increment_turn method from here on out
+	$TurnPlayerInfo/ValueSprite.texture = player_x
+	$LabelFirstMove.visible = true
+	add_message("You are X, and you get the start the game!")
+	$LabelSecondMove.modulate = Color(1,1,1,0.5)
+
 	quantum_graph = QuantumGraph.new()
 	matrix = []
 	move_key_list = []
@@ -167,24 +186,7 @@ func _ready():
 		matrix.append(new_cell)
 
 func _process(delta):
-	$ModeValue.text = TURN_DISPLAY[turn]
-	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[turn_number]
-	if is_x_turn():
-		$TurnPlayerInfo/ValueSprite.texture = player_x
-	else:
-		$TurnPlayerInfo/ValueSprite.texture = player_o
-	if is_first_choice():
-		$LabelFirstMove.visible = true
-		$LabelSecondMove.visible = false
-		$LabelResolveMove.visible = false
-	elif is_resolve_mode():
-		$LabelFirstMove.visible = false
-		$LabelSecondMove.visible = false
-		$LabelResolveMove.visible = true		
-	else:
-		$LabelFirstMove.visible = false
-		$LabelSecondMove.visible = true
-		$LabelResolveMove.visible = false
+	pass
 
 func get_classical_board():
 	var list = []
@@ -233,6 +235,7 @@ func update_move_history(board_index):
 		$HistoryText.text = $HistoryText.text + ", " + str(board_index) + "\n"
 
 func increment_turn():
+	current_cell_focus = -1
 	if check_for_collapse():
 		if turn == TURN_XA or turn == TURN_XB:
 			turn = TURN_O_RESOLVE
@@ -240,23 +243,57 @@ func increment_turn():
 				make_computer_move()
 		elif turn == TURN_OA or turn == TURN_OB:
 			turn = TURN_X_RESOLVE
+			add_message("so you get to choose which spot they should take")
+			add_message("O has chosen a move resulting in a conflict.")
 		else:
 			print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
 	else:
 		if turn == TURN_XA:
 			turn = TURN_XB
+			add_message("")
+			add_message("Now make your second quantum move")
 		elif turn == TURN_XB or turn == TURN_O_RESOLVE:
 			turn = TURN_OA
 			turn_number = turn_number + 1
+			add_message("")
+			add_message("Now it is the computers turn")
 		elif turn == TURN_OA:
 			turn = TURN_OB
+			add_message("")
+			add_message("The computer made its first move, now the second ...")
 		elif turn == TURN_OB or turn == TURN_X_RESOLVE:
 			turn = TURN_XA
 			turn_number = turn_number + 1
+			add_message("Make your first quantum move")
+			add_message("It is your turn again")
+		elif turn == TURN_GAME_OVER:
+			add_message("The game is over.")
+			add_message($WinLabel.text)
 		else:
-			print("ERROR do not know how to increement turn ", TURN_DISPLAY[turn])
+			print("ERROR do not know how to increment turn ", TURN_DISPLAY[turn])
+	# Update the display
+	$ModeValue.text = TURN_DISPLAY[turn]
+	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[turn_number]
+	if is_x_turn():
+		$TurnPlayerInfo/ValueSprite.texture = player_x
+	else:
+		$TurnPlayerInfo/ValueSprite.texture = player_o
+	if is_first_choice():
+		$LabelFirstMove.visible = true
+		$LabelFirstMove.modulate = Color(1,1,1,1)
+		$LabelSecondMove.visible = false
+		$LabelResolveMove.visible = false
+	elif is_resolve_mode():
+		$LabelFirstMove.visible = false
+		$LabelSecondMove.visible = false
+		$LabelResolveMove.visible = true		
+	else:
+		$LabelFirstMove.modulate = Color(1,1,1,0.4)
+		$LabelSecondMove.modulate = Color(1,1,1,1)
+		$LabelSecondMove.visible = true
+		$LabelResolveMove.visible = false
+	# Set the messages accordingly
 
-# functions
 func play(cell: Area2D):
 	# Verify there is not already a classical move here
 	var cell_info = matrix[cell.board_index]
@@ -272,7 +309,7 @@ func play(cell: Area2D):
 
 	update_move_history(cell.board_index)
 
-	print("--- After play ", turn_number, new_move.key())
+	print("--- After play ", turn_number, "  key: ", new_move.key())
 	print("Classical board: ", get_classical_board())
 	
 	increment_turn()
@@ -526,11 +563,11 @@ func get_score(classical_board) -> int:
 
 func end_game(value: int) -> void:
 	if value == 1:
-		$WinLabel.text = "X win!"
+		$WinLabel.text = "X has won the game!"
 	elif value == -1:
-		$WinLabel.text = "O win!"
+		$WinLabel.text = "O has won the game!!"
 	else: # value == 0
-		$WinLabel.text = "Tie game"
+		$WinLabel.text = "It was a tie game"
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
 	turn = TURN_GAME_OVER
@@ -539,6 +576,11 @@ func end_game(value: int) -> void:
 
 #signal functions
 func on_cell_focus(cell: Area2D):
+	if cell.board_index == current_cell_focus:
+		return
+
+	current_cell_focus = cell.board_index
+
 	var cell_info = matrix[cell.board_index]
 	if turn == TURN_X_RESOLVE:
 		#print("its resolve mode and the key is ", resolve_key, ".")
@@ -633,12 +675,12 @@ func delayed_computer_resolve():
 	timer.connect("timeout",self,"make_regular_computer_move")
 
 func delayed_computer_play_1():
-	print("computer move (1) ", OS.get_ticks_msec())
+	print("computer move (1) ms ", OS.get_ticks_msec())
 	var computer_cell: Area2D = get_cell_by_index(computer_move_1)
 	play(computer_cell)
 
 func delayed_computer_play_2():
-	print("computer move (2) ", OS.get_ticks_msec())
+	print("computer move (2) ms ", OS.get_ticks_msec())
 	var computer_cell: Area2D = get_cell_by_index(computer_move_2)
 	play(computer_cell)
 
