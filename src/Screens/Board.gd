@@ -13,6 +13,7 @@ var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER
 var message_1 = ""
 var message_2 = ""
 var current_cell_focus = -1
+var current_help = 1
 
 var first_move_sound = preload("res://asset/audio/FirstMove.ogg")
 var second_move_sound = preload("res://asset/audio/SecondMove.ogg")
@@ -156,6 +157,8 @@ func add_message(text_value):
 	$MessagesLabel1.bbcode_text = "[center]" + message_1 + "[center]"	
 	$MessagesLabel2.bbcode_text = "[center]" + message_2 + "[center]"	
 
+func set_what_next(text_value):
+	$WhatNextText.text = text_value
 	
 # _init() and _ready()
 func _ready():
@@ -168,6 +171,7 @@ func _ready():
 	$TurnPlayerInfo/ValueSprite.scale = Vector2(0.5, 0.5)
 	$MessagesLabel1.get_child(0).modulate.a = 0
 	$MessagesLabel2.get_child(0).modulate.a = 0
+	$RulesButton.add_color_override("font_color", Color("83D3F3"))
 	
 	# Bootstrap the turn related display elements
 	# This then gets adjusted in the increment_turn method from here on out
@@ -175,6 +179,10 @@ func _ready():
 	$LabelFirstMove.visible = true
 	add_message("You are X, and you get the start the game!")
 	$LabelSecondMove.modulate = Color(1,1,1,0.5)
+	set_what_next("""
+You are X, and you get to go first.
+	
+Click in one of the nine spaces to make your first quantum move.""" )
 
 	quantum_graph = QuantumGraph.new()
 	matrix = []
@@ -788,3 +796,26 @@ func print_stats(start_time: int) -> void:
 	stats.nodes = visited_nodes
 	visited_nodes = 0
 	#print("STATS:\n", stats)
+
+
+func _on_RulesButton_pressed():
+	$RulesButton.text = "THE RULES"
+	$WhatNextButton.text = "What do I do next?"
+	set_help_visible(true)
+
+func _on_WhatNextButton_pressed():
+	$RulesButton.text = "The rules"
+	$WhatNextButton.text = "WHAT NEXT?"
+	set_help_visible(false)
+	
+func set_help_visible(val):
+	$QuantumRule1.visible = val
+	$QuantumRule2.visible = val
+	$QuantumRule3.visible = val
+	$QuantumRule4.visible = val
+	$QuantumRule5.visible = val
+	$QuantumRule6.visible = val
+	$HelpImage1.visible = val
+	$HelpImage2.visible = val
+	$HelpImage3.visible = val
+	$WhatNextText.visible = !val
