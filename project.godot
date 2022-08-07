@@ -9,11 +9,6 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Node",
-"class": "ComputerStrategy",
-"language": "GDScript",
-"path": "res://src/ComputerStrategyReal.gd"
-}, {
 "base": "Node2D",
 "class": "Model",
 "language": "GDScript",
@@ -35,7 +30,6 @@ _global_script_classes=[ {
 "path": "res://src/Set.gd"
 } ]
 _global_script_class_icons={
-"ComputerStrategy": "",
 "Model": "",
 "QuantumGraph": "",
 "QuantumNode": "",

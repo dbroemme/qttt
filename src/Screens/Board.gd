@@ -54,7 +54,6 @@ onready var help_image_empty: = preload("res://asset/LittleBlackBox.png")
 const QuantumGraph = preload("../QuantumGraph.gd")
 const QuantumNode = preload("../QuantumNode.gd")
 const Set = preload("../Set.gd")
-const ComputerStrategy = preload("../ComputerStrategyReal.gd")
 
 var rng = RandomNumberGenerator.new()
 var msg_initial_1 = """
@@ -90,6 +89,12 @@ class Move:
 	var player: int        # 1 = X, -1 = O, 0 = nobody
 	var order: int         # the nth move of the game
 	var is_classical: int  # 1 = yes, 0 = false
+	func duplicate():
+		var new_move = Move.new()
+		new_move.player = self.player
+		new_move.order = self.order
+		new_move.is_classical = self.is_classical
+		return new_move
 	func to_debug():
 		print("  Move ", player, "  order: ", order, "  classical: ", is_classical)
 	func key():
@@ -109,8 +114,21 @@ class CellInfo:
 	var moves: Array
 	func _init():
 		moves = []
+	func duplicate():
+		var new_cell_info = CellInfo.new()
+		new_cell_info.board_index = self.board_index
+		var copy_of_moves = []
+		for existing_move in moves:
+			copy_of_moves.append(existing_move.duplicate())
+		new_cell_info.moves = copy_of_moves
+		return new_cell_info
 	func number_of_moves():
 		return moves.size()
+	func to_display():
+		var str1 = ""
+		for move in moves:
+			str1 = str1 + move.key() + ", "
+		return str1
 	func to_debug():
 		print("Cell ", board_index, "  moves: ", moves)
 		for move in moves:
@@ -236,7 +254,6 @@ func _ready():
 	turn = TURN_XA
 	turn_number = 1
 	resolve_cells = Set.new()
-	computer_strategy = ComputerStrategy.new()
 	for cell in get_tree().get_nodes_in_group("cells"):
 		cell.board_index = matrix.size()
 		cell.connect("clicked", self, "on_cell_clicked")
@@ -769,7 +786,7 @@ func make_computer_move():
 func make_regular_computer_move():
 	var classical_board = get_classical_board()
 	if GameState.vs_computer and !is_game_over(classical_board):
-		var computer_indexes = computer_strategy.real_agent_moves(matrix, turn_number)
+		var computer_indexes = real_agent_moves(matrix, turn_number)
 		print("The computer wants moves ", computer_indexes)
 		# If the length is not two, we have a problem
 		if computer_indexes.size() != 2:
@@ -885,7 +902,7 @@ func print_stats(start_time: int) -> void:
 	stats.elapsed_time = str(OS.get_ticks_msec() - start_time) + " ms"
 	stats.nodes = visited_nodes
 	visited_nodes = 0
-	#print("STATS:\n", stats)
+	print("STATS:\n", stats)
 
 
 func _on_HyperLinkButton_pressed():
@@ -908,7 +925,6 @@ func _on_PlayAgainButton_pressed():
 	turn = TURN_XA
 	turn_number = 1
 	resolve_cells = Set.new()
-	computer_strategy = ComputerStrategy.new()
 	for cell in get_tree().get_nodes_in_group("cells"):
 		for qc in cell.quantum_cells:
 			qc.queue_free()
@@ -919,3 +935,209 @@ func _on_PlayAgainButton_pressed():
 		new_cell.board_index = matrix.size()
 		matrix.append(new_cell)
 
+#
+# Real computer strategy
+#
+var matrix_copy
+var CORNER_CELLS = [0, 2, 6, 8]
+var MIDDLE_CELL = 4
+var WIN_L_V = [0, 3, 6]
+var WIN_M_V = [1, 4, 7]
+var WIN_R_V = [2, 5, 8]
+var WIN_H_T = [0, 1, 2]
+var WIN_H_M = [3, 4, 5]
+var WIN_H_B = [6, 7, 8]
+var WIN_D_L = [0, 4, 8]
+var WIN_D_R = [2, 4, 7]
+var ALL_WINS = [WIN_L_V, WIN_M_V, WIN_R_V, WIN_H_T, WIN_H_M, WIN_H_B, WIN_D_L, WIN_D_R]
+
+
+func win_check(matrix, player_val, list):
+	return win_check_internal(matrix, player_val, list[0], list[1], list[2])
+
+func win_check_internal(matrix, player_val, index1, index2, index3):
+	var cell_info_1 = matrix[index1]
+	var cell_info_2 = matrix[index2]
+	var cell_info_3 = matrix[index3]
+	var count = 0
+	var check_1 = cell_info_1.has_classical_player(player_val)
+	var check_2 = cell_info_2.has_classical_player(player_val)
+	var check_3 = cell_info_3.has_classical_player(player_val)
+	var still_quantum = []
+	if check_1:
+		count = count + 2
+	else:
+		still_quantum.append(index1)
+		if cell_info_1.has_quantum_player(player_val):
+			count = count + 1
+		
+	if check_2:
+		count = count + 2
+	else:
+		still_quantum.append(index2)
+		if cell_info_2.has_quantum_player(player_val):
+			count = count + 1
+
+	if check_3:
+		count = count + 2
+	else:
+		still_quantum.append(index3)
+		if cell_info_3.has_quantum_player(player_val):
+			count = count + 1
+
+	return [count, still_quantum]	
+
+func is_empty(matrix, index):
+	return matrix[index].number_of_moves() == 0
+
+func get_remaining_corners(matrix):
+	var list = []
+	for corner_index in CORNER_CELLS:
+		if is_empty(matrix, corner_index):
+			list.append(corner_index)
+	return list
+
+func real_agent_moves(matrix, turn_number):
+	print_matrix(matrix)
+	var new_moves = []
+	if turn_number == 2:
+		# On the first move, grab two open corners
+		var open_corners = get_remaining_corners(matrix)
+		if open_corners.size() > 2:
+			new_moves.append(open_corners[0])
+			new_moves.append(open_corners[2])
+		elif open_corners.size() > 1:
+			new_moves.append(open_corners[0])
+			new_moves.append(open_corners[1])
+	else:
+		# Is there somewhere that X can win right away? Defense first
+		for possible_win in ALL_WINS:
+			var check_list = win_check(matrix, 1, possible_win)
+			if check_list[0] > 1:
+				print("Gotta block at ", check_list[1][0])
+				print("Still quantum: ", check_list[1])
+				if check_list[1].size() > 1:
+					return [check_list[1][0], check_list[1][1]]
+				new_moves.append(check_list[1][0])
+	#if turn_number == 4:
+	#	var open_corners = get_remaining_corners(matrix)
+	#	if open_corners.size() > 1:
+	#		new_moves.append(open_corners[0])
+	#		new_moves.append(open_corners[1])
+	#	elif open_corners.size() == 1:
+	#		new_moves.append(open_corners[0])
+
+	#	if new_moves.size() < 2 and is_empty(matrix, MIDDLE_CELL):
+	#		new_moves.append(MIDDLE_CELL)
+	
+	# Don't entangle yourself unless about to win
+	
+	# TODO Prefer at least one empty square
+	#var computer_moves = computer_search(matrix)
+	#print("The computer search moves are ", computer_moves)
+	
+	var available_moves = get_empty_tiles(get_classical_board())
+	if new_moves.size() < 2:
+		if new_moves.size() == 0:
+			return [available_moves[0], available_moves[1]]
+		elif new_moves.size() == 1:
+			new_moves.append(available_moves[0])
+
+	return new_moves
+
+func copy_matrix_with_moves(matrix, moves, player_val, turn_number):
+	var matrix_copy = copy_matrix(matrix)
+	play_in_matrix(matrix_copy, moves[0], player_val, turn_number)
+	play_in_matrix(matrix_copy, moves[1], player_val, turn_number)
+	# TODO perform any resolutions
+	# Can we encapsulate that logic
+	return matrix_copy
+
+func play_in_matrix(matrix, move_index, player_val, turn_number):
+	var cell_info = matrix_copy[move_index]
+	if !cell_info.is_quantum():
+		print("ERROR computer strategy cannot make a move in classical cell ", move_index)
+		return
+	var new_move = computer_create_move_instance(player_val, turn_number)
+	if cell_info.has_move(new_move.key()):
+		print("ERROR computer strategy trying to make a duplicate move in cell ", move_index)		
+		return
+
+func computer_search(matrix):
+	var start_time: = OS.get_ticks_msec()
+	# -1 is the computer, so start with that for the search tree
+	#   matrix, depth = 0, min, max, player is computer -1
+	var moves = computer_alpha_beta_search(matrix, 0, -INF, INF, -1)
+	print_stats(start_time)
+	return moves
+
+func computer_alpha_beta_search(matrix, depth, alpha, beta, player) -> Array:
+	print("cabs ", depth)
+	visited_nodes += 1
+	var classical_board = computer_get_classical_board(matrix_copy)
+	if is_game_over(classical_board) or depth == 0:
+		var utility: = computer_get_utility(classical_board, depth)
+		return [-1, utility]
+	var best_value: Array
+	if player == 1:
+		# The human player is trying to get the highest value
+		best_value = [-1, -INF]
+	else:
+		# The computer player is trying to get the lowest value
+		best_value = [-1, INF]
+
+	#for move in get_empty_tiles(classical_board):
+	#	var cell: Area2D = get_cell_by_index(move)
+		# TODO This needs to be, make a copy of the board with the given move applied
+	#	var board_copy = copy_board_with_move(classical_board, move, is_max)
+	#	var value: Array = [move, alpha_beta_search(board_copy, depth-1, alpha, beta, not is_max)[1]]
+		# Not needed because we are not modifying the actual game board
+		#state.undo_move(cell)
+	#	if is_max:
+	#		best_value = max_array(value, best_value, 1)
+	#		alpha = max(alpha, best_value[1])
+	#		if alpha >= beta:
+	#			break # return [move,alpha]
+	#	else:
+	#		best_value = min_array(value, best_value, 1)
+	#		beta = min(beta, best_value[1])
+	#		if alpha >= beta:
+	#			break # return [move,beta]
+	return best_value
+
+func computer_get_utility(classical_board: Array, depth: int) -> int:
+	return get_score(classical_board) - depth
+
+#
+# Many of these are essentially copies of methods from Board.gd
+# We should really encapsulate this better
+#
+func copy_matrix(matrix):
+	var new_matrix = []
+	for existing_cell_info in matrix:
+		new_matrix.append(existing_cell_info.duplicate())
+	return new_matrix
+
+func computer_get_classical_board(matrix_copy):
+	var list = []
+	for cell_info in matrix_copy:
+		list.append(cell_info.get_value())
+	return list
+
+func computer_create_move_instance(player_val, turn_number):
+	var new_move = Move.new()
+	new_move.player = player_val
+	new_move.order = turn_number
+	new_move.is_classical = false
+	return new_move
+
+func print_matrix(matrix):
+	print(pad(matrix[0].to_display()), "  |  ", pad(matrix[1].to_display()), "  |  ", pad(matrix[2].to_display()))
+	print("----------------  |  ----------------  |  ----------------")
+	print(pad(matrix[3].to_display()), "  |  ", pad(matrix[4].to_display()), "  |  ", pad(matrix[5].to_display()))
+	print("----------------  |  ----------------  |  ----------------")
+	print(pad(matrix[6].to_display()), "  |  ", pad(matrix[7].to_display()), "  |  ", pad(matrix[8].to_display()))
+
+func pad(val):
+	return "%16s" % val
+	
