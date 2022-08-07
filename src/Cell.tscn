@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://src/QuantumCell.tscn" type="PackedScene" id=1]
 [ext_resource path="res://src/Cell.gd" type="Script" id=2]
+[ext_resource path="res://asset/cell_selected.png" type="Texture" id=3]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 63.8409, 63.4541 )
@@ -13,6 +14,12 @@ script = ExtResource( 2 )
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2( 7.99995, 7.06995 )
 shape = SubResource( 1 )
+
+[node name="WinHighlight" type="Sprite" parent="."]
+visible = false
+modulate = Color( 1, 1, 1, 0.803922 )
+position = Vector2( 5.8408, 2.524 )
+texture = ExtResource( 3 )
 
 [node name="Sign" type="Sprite" parent="."]
 visible = false

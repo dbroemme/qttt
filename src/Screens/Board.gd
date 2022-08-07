@@ -599,26 +599,52 @@ func check_victory(classical_board) -> int:
 	var winner = 0
 	winner = all_have_value(classical_board, 0, 3, 6)
 	if winner != 0:
+		$Cell1/WinHighlight.visible = true
+		$Cell4/WinHighlight.visible = true
+		$Cell7/WinHighlight.visible = true
 		return winner
 	winner = all_have_value(classical_board, 1, 4, 7)		
 	if winner != 0:
+		$Cell2/WinHighlight.visible = true
+		$Cell5/WinHighlight.visible = true
+		$Cell8/WinHighlight.visible = true
 		return winner
-	winner = all_have_value(classical_board, 2, 6, 8)
+	winner = all_have_value(classical_board, 2, 5, 8)
 	if winner != 0:
+		$Cell3/WinHighlight.visible = true
+		$Cell6/WinHighlight.visible = true
+		$Cell9/WinHighlight.visible = true
 		return winner
 	winner = all_have_value(classical_board, 0, 1, 2)
 	if winner != 0:
+		$Cell1/WinHighlight.visible = true
+		$Cell2/WinHighlight.visible = true
+		$Cell3/WinHighlight.visible = true
 		return winner
 	winner = all_have_value(classical_board, 3, 4, 5)		
 	if winner != 0:
+		$Cell4/WinHighlight.visible = true
+		$Cell5/WinHighlight.visible = true
+		$Cell6/WinHighlight.visible = true
 		return winner
 	winner = all_have_value(classical_board, 6, 7, 8)
 	if winner != 0:
+		$Cell7/WinHighlight.visible = true
+		$Cell8/WinHighlight.visible = true
+		$Cell9/WinHighlight.visible = true
 		return winner
 	winner = all_have_value(classical_board, 0, 4, 8)
 	if winner != 0:
+		$Cell1/WinHighlight.visible = true
+		$Cell5/WinHighlight.visible = true
+		$Cell9/WinHighlight.visible = true
 		return winner
-	return all_have_value(classical_board, 2, 4, 6)
+	winner = all_have_value(classical_board, 2, 4, 6)
+	if winner != 0:
+		$Cell3/WinHighlight.visible = true
+		$Cell5/WinHighlight.visible = true
+		$Cell7/WinHighlight.visible = true
+	return winner
 
 func is_game_over(classical_board) -> bool:
 	if get_score(classical_board) != 0 or get_empty_tiles(classical_board).size() == 0:
@@ -649,6 +675,7 @@ func end_game(value: int) -> void:
 		the_cell.clear_focus()
 	turn = TURN_GAME_OVER
 	#get_tree().change_scene("res://src/Screens/Main.tscn")
+	# TODO change the link button to a play again button?
 
 
 #signal functions
