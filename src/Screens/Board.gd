@@ -841,3 +841,7 @@ func print_stats(start_time: int) -> void:
 	stats.nodes = visited_nodes
 	visited_nodes = 0
 	#print("STATS:\n", stats)
+
+
+func _on_HyperLinkButton_pressed():
+	OS.shell_open("https://darren-broemmer.medium.com/")
