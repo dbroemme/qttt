@@ -47,12 +47,44 @@ onready var NUMBER_IMAGES = [img_number_0, img_number_1, img_number_2, img_numbe
 					 img_number_4, img_number_5, img_number_6, img_number_7,
 					 img_number_8, img_number_9]
 
+onready var help_image_subscript: = preload("res://asset/HelpSubscript.png")
+onready var help_image_resolve: = preload("res://asset/HelpResolve.png")
+onready var help_image_classical: = preload("res://asset/HelpClassical.png")
+onready var help_image_empty: = preload("res://asset/LittleBlackBox.png")
+
 const QuantumGraph = preload("../QuantumGraph.gd")
 const QuantumNode = preload("../QuantumNode.gd")
 const Set = preload("../Set.gd")
 const ComputerStrategy = preload("../ComputerStrategyReal.gd")
 
 var rng = RandomNumberGenerator.new()
+var msg_initial_1 = """
+You are X, and you get to go first.
+Click in one of the nine spaces to make your first quantum move.
+
+Each player makes two quantum moves on each turn. Think of these as multiple potential games being played at once.
+"""
+var msg_initial_2 = "Each of your two moves will have a numeric subscript. This is the turn number of those moves."
+var msg_you_made_first_move = """
+Great! Now go ahead and choose a second space for your other quantum move of this turn.
+"""
+var msg_not_real = "At this point, neither of your moves is \"real\", or what we call a classical move. Only classical moves can win the game."
+var msg_computer_first_move = "The computer made its first quantum move, now for the second ..."
+var msg_computer_second_move = "The computer finished its quantum moves for that round. Now it is your turn again."
+var msg_your_turn = "Go ahead and click in a non-classical space to make your first quantum move of the turn."
+var msg_you_get_to_resolve = """
+The computer chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+"""
+var msg_you_get_to_resolve_2 = """
+You get to choose which of the conflict spots the computer should take. Click on a highlighted space to choose.
+"""
+
+var msg_computer_get_to_resolve = """
+You chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+
+The computer gets to choose which of the conflict spots you should take.
+"""
+var msg_computer_get_to_resolve_2 = ""
 
 class Move:
 	var player: int        # 1 = X, -1 = O, 0 = nobody
@@ -151,14 +183,18 @@ var computer_strategy
 var stats = {}
 var visited_nodes: = 0
 
-func add_message(text_value):
-	message_2 = message_1
+func set_message_1(text_value):
 	message_1 = text_value
-	$MessagesLabel1.bbcode_text = "[center]" + message_1 + "[center]"	
-	$MessagesLabel2.bbcode_text = "[center]" + message_2 + "[center]"	
+	#$MessagesLabel1.bbcode_text = "[center]" + message_1 + "[center]"	
+	$MessagesLabel1.text = message_1	
 
-func set_what_next(text_value):
-	$WhatNextText.text = text_value
+func set_message_2(text_value):
+	message_2 = text_value
+	#$MessagesLabel2.bbcode_text = "[center]" + message_2 + "[center]"	
+	$MessagesLabel2.text = message_2
+	
+func set_message_image(img):
+	$HelpImage1.texture = img	
 	
 # _init() and _ready()
 func _ready():
@@ -171,18 +207,14 @@ func _ready():
 	$TurnPlayerInfo/ValueSprite.scale = Vector2(0.5, 0.5)
 	$MessagesLabel1.get_child(0).modulate.a = 0
 	$MessagesLabel2.get_child(0).modulate.a = 0
-	$RulesButton.add_color_override("font_color", Color("83D3F3"))
 	
 	# Bootstrap the turn related display elements
 	# This then gets adjusted in the increment_turn method from here on out
 	$TurnPlayerInfo/ValueSprite.texture = player_x
 	$LabelFirstMove.visible = true
-	add_message("You are X, and you get the start the game!")
 	$LabelSecondMove.modulate = Color(1,1,1,0.5)
-	set_what_next("""
-You are X, and you get to go first.
-	
-Click in one of the nine spaces to make your first quantum move.""" )
+	set_message_1(msg_initial_1)
+	set_message_2(msg_initial_2)
 
 	quantum_graph = QuantumGraph.new()
 	matrix = []
@@ -251,17 +283,20 @@ func update_move_history(board_index):
 func increment_turn():
 	current_cell_focus = -1
 	if check_for_collapse():
+		set_message_image(help_image_empty)
 		$AudioPlayer.stream = resolve_sound
 		$AudioPlayer.play()
 		$BoardCamera.add_trauma(0.5)
 		if turn == TURN_XA or turn == TURN_XB:
 			turn = TURN_O_RESOLVE
+			set_message_1(msg_computer_get_to_resolve)
+			set_message_2(msg_computer_get_to_resolve_2)
 			if GameState.vs_computer:
 				make_computer_move()
 		elif turn == TURN_OA or turn == TURN_OB:
 			turn = TURN_X_RESOLVE
-			add_message("so you get to choose which spot they should take")
-			add_message("The computer chose a move resulting in a conflict.")
+			set_message_1(msg_you_get_to_resolve)
+			set_message_2(msg_you_get_to_resolve_2)
 		else:
 			print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
 	else:
@@ -269,31 +304,41 @@ func increment_turn():
 			turn = TURN_XB
 			$AudioPlayer.stream = first_move_sound
 			$AudioPlayer.play()
-			add_message("")
-			add_message("Now make your second quantum move")
+			if turn_number == 1:
+				set_message_1(msg_you_made_first_move)
+				set_message_2(msg_not_real)
+			else:
+				set_message_image(help_image_empty)
+				set_message_2("")
+				set_message_1(msg_you_made_first_move)
 		elif turn == TURN_XB or turn == TURN_O_RESOLVE:
+			if turn == TURN_O_RESOLVE:
+				set_message_2("The computer chose a resolution.")				
+			else:
+				set_message_1("Now it is the computers turn")
+				set_message_2("")
+
 			turn = TURN_OA
 			turn_number = turn_number + 1
 			$AudioPlayer.stream = second_move_sound
 			$AudioPlayer.play()
-			add_message("")
-			add_message("Now it is the computers turn")
+			set_message_image(help_image_empty)
 		elif turn == TURN_OA:
 			$AudioPlayer.stream = computer_first_move_sound
 			$AudioPlayer.play()
 			turn = TURN_OB
-			add_message("")
-			add_message("The computer made its first move, now the second ...")
+			set_message_2("")
+			set_message_1(msg_computer_first_move)
 		elif turn == TURN_OB or turn == TURN_X_RESOLVE:
 			turn = TURN_XA
 			turn_number = turn_number + 1
 			$AudioPlayer.stream = computer_second_move_sound
 			$AudioPlayer.play()
-			add_message("Make your first quantum move")
-			add_message("It is your turn again")
+			set_message_1(msg_computer_second_move)
+			set_message_2(msg_your_turn)
 		elif turn == TURN_GAME_OVER:
-			add_message("The game is over.")
-			add_message($WinLabel.text)
+			set_message_1("The game is over.")
+			set_message_2($WinLabel.text)
 		else:
 			print("ERROR do not know how to increment turn ", TURN_DISPLAY[turn])
 	# Update the display
@@ -672,7 +717,7 @@ func make_computer_move():
 			computer_selected_cell = resolve_cells.elements()[1]
 		print("Computer selected ", computer_selected_cell)
 		computer_move_1 = computer_selected_cell
-		var timer = get_tree().create_timer(2)
+		var timer = get_tree().create_timer(4)
 		timer.connect("timeout",self,"delayed_computer_resolve")
 	else:
 		make_regular_computer_move()
@@ -696,7 +741,7 @@ func delayed_computer_resolve():
 	print("computer resolve ", OS.get_ticks_msec())
 	collapse_move(computer_move_1, resolve_key, true)
 	increment_turn()
-	var timer = get_tree().create_timer(2)
+	var timer = get_tree().create_timer(3)
 	timer.connect("timeout",self,"make_regular_computer_move")
 
 func delayed_computer_play_1():
@@ -796,26 +841,3 @@ func print_stats(start_time: int) -> void:
 	stats.nodes = visited_nodes
 	visited_nodes = 0
 	#print("STATS:\n", stats)
-
-
-func _on_RulesButton_pressed():
-	$RulesButton.text = "THE RULES"
-	$WhatNextButton.text = "What do I do next?"
-	set_help_visible(true)
-
-func _on_WhatNextButton_pressed():
-	$RulesButton.text = "The rules"
-	$WhatNextButton.text = "WHAT NEXT?"
-	set_help_visible(false)
-	
-func set_help_visible(val):
-	$QuantumRule1.visible = val
-	$QuantumRule2.visible = val
-	$QuantumRule3.visible = val
-	$QuantumRule4.visible = val
-	$QuantumRule5.visible = val
-	$QuantumRule6.visible = val
-	$HelpImage1.visible = val
-	$HelpImage2.visible = val
-	$HelpImage3.visible = val
-	$WhatNextText.visible = !val

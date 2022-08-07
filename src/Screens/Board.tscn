@@ -6,23 +6,55 @@
 [ext_resource path="res://asset/tileBlue_02.png" type="Texture" id=4]
 [ext_resource path="res://asset/Montserrat-Bold.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://src/InfoBox.tscn" type="PackedScene" id=6]
-[ext_resource path="res://asset/Xolonium-Regular.ttf" type="DynamicFontData" id=7]
+[ext_resource path="res://asset/dan-cristian-padure-h3kuhYUCE9A-unsplash.jpg" type="Texture" id=7]
 [ext_resource path="res://src/Screens/BoardCamera.gd" type="Script" id=8]
-[ext_resource path="res://asset/HelpResolve.png" type="Texture" id=9]
-[ext_resource path="res://asset/HelpClassical.png" type="Texture" id=10]
+[ext_resource path="res://asset/KenneyFuture.ttf" type="DynamicFontData" id=9]
+
+[sub_resource type="DynamicFont" id=2]
+size = 32
+font_data = ExtResource( 9 )
 
 [sub_resource type="DynamicFont" id=1]
 font_data = ExtResource( 5 )
 
-[sub_resource type="DynamicFont" id=2]
-font_data = ExtResource( 7 )
-
 [sub_resource type="DynamicFont" id=3]
-font_data = ExtResource( 7 )
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=4]
+font_data = ExtResource( 5 )
 
 [node name="Board" type="Node2D"]
 position = Vector2( 260, 98 )
 script = ExtResource( 1 )
+
+[node name="BackgroundImage" type="Sprite" parent="."]
+modulate = Color( 1, 1, 1, 0.286275 )
+light_mask = 0
+position = Vector2( 1134, -2 )
+texture = ExtResource( 7 )
+
+[node name="BoardBlackBackgroundRect" type="ColorRect" parent="."]
+margin_left = -217.0
+margin_top = 23.0
+margin_right = 730.0
+margin_bottom = 584.0
+mouse_filter = 2
+color = Color( 0, 0, 0, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="AppNameLabel" type="RichTextLabel" parent="."]
+margin_left = -221.0
+margin_top = -77.0
+margin_right = 205.0
+margin_bottom = 3.0
+custom_fonts/normal_font = SubResource( 2 )
+text = "Quantum
+Tic  Tac Toe"
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="Cell1" parent="." instance=ExtResource( 3 )]
 position = Vector2( 220.768, 103.522 )
@@ -135,13 +167,13 @@ texture = ExtResource( 4 )
 offset = Vector2( -25.5143, -7.85715 )
 
 [node name="TurnNumberInfo" parent="." instance=ExtResource( 6 )]
-position = Vector2( -224, -78 )
+position = Vector2( 224, -82 )
 
 [node name="TurnPlayerInfo" parent="." instance=ExtResource( 6 )]
-position = Vector2( -53, -78 )
+position = Vector2( 395, -82 )
 
 [node name="TurnDetailInfo" parent="." instance=ExtResource( 6 )]
-position = Vector2( 118, -78 )
+position = Vector2( 566, -82 )
 
 [node name="BackgroundFirstMove" type="ColorRect" parent="."]
 visible = false
@@ -162,25 +194,30 @@ margin_bottom = -3.0
 color = Color( 0.392157, 0.631373, 0.803922, 1 )
 
 [node name="LabelFirstMove" type="RichTextLabel" parent="."]
-margin_left = 161.0
-margin_top = -44.0
-margin_right = 262.0
-margin_bottom = -4.0
+margin_left = 609.0
+margin_top = -48.0
+margin_right = 710.0
+margin_bottom = -8.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/mono_font = SubResource( 1 )
 text = "Quantum #1
 "
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="LabelSecondMove" type="RichTextLabel" parent="."]
-visible = false
-margin_left = 161.0
+margin_left = 609.0
 margin_top = -20.0
-margin_right = 307.0
+margin_right = 756.0
 margin_bottom = 20.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/mono_font = SubResource( 1 )
 text = "Quantum #2
 "
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="LabelResolveMove" type="RichTextLabel" parent="."]
 visible = false
@@ -196,72 +233,6 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="MessagesRect" type="ColorRect" parent="."]
-margin_left = 291.0
-margin_top = -76.0
-margin_right = 732.0
-margin_bottom = 10.0
-color = Color( 0.796078, 0.92549, 0.862745, 1 )
-
-[node name="MessagesTopHighlight" type="ColorRect" parent="."]
-margin_left = 291.0
-margin_top = -77.0
-margin_right = 732.0
-margin_bottom = -72.0
-color = Color( 0.392157, 0.631373, 0.803922, 1 )
-
-[node name="MessagesBottomHighlight" type="ColorRect" parent="."]
-margin_left = 291.0
-margin_top = 5.0
-margin_right = 728.0
-margin_bottom = 10.0
-color = Color( 0.392157, 0.631373, 0.803922, 1 )
-
-[node name="MessagesLeftHighlight" type="ColorRect" parent="."]
-margin_left = 291.0
-margin_top = -76.0
-margin_right = 295.0
-margin_bottom = 9.0
-color = Color( 0.392157, 0.631373, 0.803922, 1 )
-
-[node name="MessagesRightHighlight" type="ColorRect" parent="."]
-margin_left = 728.0
-margin_top = -73.0
-margin_right = 732.0
-margin_bottom = 10.0
-color = Color( 0.392157, 0.631373, 0.803922, 1 )
-
-[node name="MessagesDisplayLabel" type="RichTextLabel" parent="."]
-margin_left = 299.0
-margin_top = -72.0
-margin_right = 724.0
-margin_bottom = 3.0
-custom_colors/default_color = Color( 0, 0, 0, 1 )
-custom_fonts/normal_font = SubResource( 2 )
-bbcode_enabled = true
-bbcode_text = "[center]Messages[center]
-"
-text = "Messages
-"
-
-[node name="MessagesLabel1" type="RichTextLabel" parent="."]
-margin_left = 304.0
-margin_top = -43.0
-margin_right = 718.0
-margin_bottom = -19.0
-custom_colors/default_color = Color( 0, 0, 0, 1 )
-custom_fonts/mono_font = SubResource( 1 )
-bbcode_enabled = true
-
-[node name="MessagesLabel2" type="RichTextLabel" parent="."]
-margin_left = 304.0
-margin_top = -22.0
-margin_right = 719.0
-margin_bottom = 2.0
-custom_colors/default_color = Color( 0, 0, 0, 1 )
-custom_fonts/mono_font = SubResource( 1 )
-bbcode_enabled = true
-
 [node name="BoardCamera" type="Camera2D" parent="."]
 position = Vector2( 256, 299 )
 current = true
@@ -275,6 +246,9 @@ margin_top = 17.0
 margin_right = 732.0
 margin_bottom = 22.0
 color = Color( 0.392157, 0.631373, 0.803922, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="BottomHighlight" type="ColorRect" parent="."]
 margin_left = -223.0
@@ -296,106 +270,34 @@ margin_top = 21.0
 margin_right = 732.0
 margin_bottom = 590.0
 color = Color( 0.392157, 0.631373, 0.803922, 1 )
-
-[node name="QuantumRule1" type="RichTextLabel" parent="."]
-margin_left = -193.0
-margin_top = 69.0
-margin_right = 145.0
-margin_bottom = 156.0
-rect_pivot_offset = Vector2( 175, 80 )
-custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
-custom_fonts/normal_font = SubResource( 3 )
-text = "You are player X. You go first.
-Each player makes two quantum
-moves on each turn, as denoted by
-"
-
-[node name="QuantumRule2" type="RichTextLabel" parent="."]
-margin_left = -69.0
-margin_top = 134.0
-margin_right = 134.0
-margin_bottom = 247.0
-rect_pivot_offset = Vector2( 175, 80 )
-custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
-custom_fonts/normal_font = SubResource( 3 )
-text = "subscripts. Think of these as multiple potential games being played at once.
-"
-
-[node name="QuantumRule3" type="RichTextLabel" parent="."]
-margin_left = -193.0
-margin_top = 246.0
-margin_right = 144.0
-margin_bottom = 359.0
-rect_pivot_offset = Vector2( 175, 80 )
-custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
-custom_fonts/normal_font = SubResource( 3 )
-text = "Once the potential moves overlap, there is a conflict that must be resolved. The other player gets to choose which conflict space becomes a real move."
-
-[node name="QuantumRule4" type="RichTextLabel" parent="."]
-margin_top = 331.0
-margin_right = 155.0
-margin_bottom = 418.0
-rect_pivot_offset = Vector2( 175, 80 )
-custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
-custom_fonts/normal_font = SubResource( 3 )
-text = "Here, O  has conflicted with itself, so X can click to choose."
-
-[node name="QuantumRule5" type="RichTextLabel" parent="."]
-margin_left = -193.0
-margin_top = 444.0
-margin_right = 145.0
-margin_bottom = 557.0
-rect_pivot_offset = Vector2( 175, 80 )
-custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
-custom_fonts/normal_font = SubResource( 3 )
-text = "If X chooses for O to occupy the space on the right, two classical moves result."
-
-[node name="QuantumRule6" type="RichTextLabel" parent="."]
-margin_top = 491.0
-margin_right = 155.0
-margin_bottom = 578.0
-rect_pivot_offset = Vector2( 175, 80 )
-custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
-custom_fonts/normal_font = SubResource( 3 )
-text = "Only classical moves can win the game."
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="HelpImage1" type="Sprite" parent="."]
-position = Vector2( -132, 176 )
+position = Vector2( -49, 296 )
 texture = ExtResource( 2 )
 
-[node name="HelpImage2" type="Sprite" parent="."]
-position = Vector2( -102, 376 )
-scale = Vector2( 0.5, 0.5 )
-texture = ExtResource( 9 )
-
-[node name="HelpImage3" type="Sprite" parent="."]
-position = Vector2( -104, 529 )
-scale = Vector2( 0.5, 0.5 )
-texture = ExtResource( 10 )
-
-[node name="RulesButton" type="Button" parent="."]
-margin_left = -192.0
-margin_top = 38.0
-margin_right = -35.0
-margin_bottom = 58.0
-text = "The rules"
-
-[node name="WhatNextButton" type="Button" parent="."]
-margin_left = -22.0
-margin_top = 38.0
-margin_right = 135.0
-margin_bottom = 58.0
-text = "What do I do next?"
-
-[node name="WhatNextText" type="RichTextLabel" parent="."]
-visible = false
-margin_left = -193.0
-margin_top = 69.0
-margin_right = 145.0
-margin_bottom = 486.0
-rect_pivot_offset = Vector2( 175, 80 )
+[node name="MessagesLabel1" type="RichTextLabel" parent="."]
+margin_left = -184.0
+margin_top = 41.0
+margin_right = 120.0
+margin_bottom = 254.0
 custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
 custom_fonts/normal_font = SubResource( 3 )
+bbcode_enabled = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[connection signal="button_up" from="RulesButton" to="." method="_on_RulesButton_pressed"]
-[connection signal="button_up" from="WhatNextButton" to="." method="_on_WhatNextButton_pressed"]
+[node name="MessagesLabel2" type="RichTextLabel" parent="."]
+margin_left = -184.0
+margin_top = 348.0
+margin_right = 120.0
+margin_bottom = 524.0
+custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
+custom_fonts/normal_font = SubResource( 4 )
+bbcode_enabled = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
