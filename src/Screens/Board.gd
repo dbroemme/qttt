@@ -13,7 +13,6 @@ var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER
 var message_1 = ""
 var message_2 = ""
 var current_cell_focus = -1
-var current_help = 1
 
 var first_move_sound = preload("res://asset/audio/FirstMove.ogg")
 var second_move_sound = preload("res://asset/audio/SecondMove.ogg")
@@ -674,8 +673,8 @@ func end_game(value: int) -> void:
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
 	turn = TURN_GAME_OVER
+	$PlayAgainButton.visible = true
 	#get_tree().change_scene("res://src/Screens/Main.tscn")
-	# TODO change the link button to a play again button?
 
 
 #signal functions
@@ -879,3 +878,32 @@ func print_stats(start_time: int) -> void:
 
 func _on_HyperLinkButton_pressed():
 	OS.shell_open("https://darren-broemmer.medium.com/")
+
+
+func _on_PlayAgainButton_pressed():
+	current_cell_focus = -1
+	$PlayAgainButton.visible = false
+	$HistoryText.text = ""
+	$TurnPlayerInfo/ValueSprite.texture = player_x
+	$LabelFirstMove.visible = true
+	$LabelSecondMove.modulate = Color(1,1,1,0.5)
+	set_message_1(msg_initial_1)
+	set_message_2(msg_initial_2)
+
+	quantum_graph = QuantumGraph.new()
+	matrix = []
+	move_key_list = []
+	turn = TURN_XA
+	turn_number = 1
+	resolve_cells = Set.new()
+	computer_strategy = ComputerStrategy.new()
+	for cell in get_tree().get_nodes_in_group("cells"):
+		for qc in cell.quantum_cells:
+			qc.queue_free()
+		cell.quantum_cells = []
+		cell.classical = false
+		cell.initial_hide()		
+		var new_cell = CellInfo.new()
+		new_cell.board_index = matrix.size()
+		matrix.append(new_cell)
+

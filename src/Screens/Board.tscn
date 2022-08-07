@@ -312,4 +312,16 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="PlayAgainButton" type="Button" parent="."]
+visible = false
+margin_left = -197.0
+margin_top = 267.0
+margin_right = 132.0
+margin_bottom = 307.0
+text = "Play again"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [connection signal="pressed" from="HyperLinkButton" to="." method="_on_HyperLinkButton_pressed"]
+[connection signal="pressed" from="PlayAgainButton" to="." method="_on_PlayAgainButton_pressed"]

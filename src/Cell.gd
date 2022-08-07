@@ -16,8 +16,14 @@ func _ready():
 	board_index = -1
 	quantum_cells = []
 	classical = false
-	$Placeholder/OrderLabel.visible = false
+	initial_hide()
 
+func initial_hide():
+	$Placeholder/OrderLabel.visible = false
+	$WinHighlight.visible = false
+	$Sign.visible = false
+	$Sign.texture = null
+	
 func make_classical(is_player):
 	$Placeholder/OrderLabel.visible = false
 	for qc in quantum_cells:
