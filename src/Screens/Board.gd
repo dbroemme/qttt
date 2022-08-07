@@ -143,6 +143,17 @@ class CellInfo:
 			if move.key() == a_key:
 				return true
 		return false
+	func has_quantum_player(player_val):
+		var the_value = get_value()
+		if the_value == 0:
+			for move in moves:
+				if move.player == player_val:
+					return true
+			return false
+		return false
+	func has_classical_player(player_val):
+		var the_value = get_value()
+		return the_value == player_val
 	func add_move(order, player):
 		var new_move = Move.new()
 		new_move.player = player
@@ -758,7 +769,8 @@ func make_computer_move():
 func make_regular_computer_move():
 	var classical_board = get_classical_board()
 	if GameState.vs_computer and !is_game_over(classical_board):
-		var computer_indexes = computer_strategy.fake_agent_moves(matrix, turn_number)
+		var computer_indexes = computer_strategy.real_agent_moves(matrix, turn_number)
+		print("The computer wants moves ", computer_indexes)
 		# If the length is not two, we have a problem
 		if computer_indexes.size() != 2:
 			print("ERROR computer moves are not size two, they are ", computer_indexes.size())
