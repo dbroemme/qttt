@@ -74,6 +74,7 @@ var msg_computer_second_move = "The computer finished its quantum moves for that
 var msg_your_turn = "Go ahead and click in a non-classical space to make your first quantum move of the turn."
 var msg_you_get_to_resolve = """
 The computer chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+Some of the earlier possible games are no longer possible, so one resolved space often leads to other spaces being resolved.
 """
 var msg_you_get_to_resolve_2 = """
 You get to choose which of the conflict spots the computer should take. Click on a highlighted space to choose.
@@ -194,7 +195,10 @@ func set_message_2(text_value):
 	$MessagesLabel2.text = message_2
 	
 func set_message_image(img):
-	$HelpImage1.texture = img	
+	$HelpImage1.texture = img
+	
+func set_message_image_invisible():
+	$HelpImage1.visible = false
 	
 # _init() and _ready()
 func _ready():
@@ -284,6 +288,7 @@ func increment_turn():
 	current_cell_focus = -1
 	if check_for_collapse():
 		set_message_image(help_image_empty)
+		set_message_image_invisible()
 		$AudioPlayer.stream = resolve_sound
 		$AudioPlayer.play()
 		$BoardCamera.add_trauma(0.5)
@@ -309,6 +314,7 @@ func increment_turn():
 				set_message_2(msg_not_real)
 			else:
 				set_message_image(help_image_empty)
+				set_message_image_invisible()
 				set_message_2("")
 				set_message_1(msg_you_made_first_move)
 		elif turn == TURN_XB or turn == TURN_O_RESOLVE:
@@ -323,6 +329,7 @@ func increment_turn():
 			$AudioPlayer.stream = second_move_sound
 			$AudioPlayer.play()
 			set_message_image(help_image_empty)
+			set_message_image_invisible()
 		elif turn == TURN_OA:
 			$AudioPlayer.stream = computer_first_move_sound
 			$AudioPlayer.play()
