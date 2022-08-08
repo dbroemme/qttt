@@ -358,11 +358,11 @@ class GameState:
 		var cell_info = matrix[board_index]
 		if !cell_info.is_quantum():
 			print("ERROR cannot make a move in classical cell ", board_index)
-			return false
+			return [false, -1, -1, -1]
 	
 		var new_move = create_move_instance()
 		if cell_info.has_move(new_move.key()):
-			return false
+			return [false, -1, -1, -1]
 			
 		if is_first_choice():
 			move_key_list.append(new_move.key())
@@ -375,7 +375,8 @@ class GameState:
 		print("--- After play ", turn_number, " mode: ", turn, "  key: ", new_move.key())
 		print("Classical board: ", get_classical_board())
 		print_matrix()
-		return true
+		var old_turn = increment_turn()
+		return [true, old_turn, turn, turn_number]
 
 	func print_matrix():
 		print(pad(matrix[0].to_display()), "  |  ", pad(matrix[1].to_display()), "  |  ", pad(matrix[2].to_display()))
@@ -387,6 +388,31 @@ class GameState:
 	func pad(val):
 		return "%16s" % val
 
+	func increment_turn():
+		var old_turn = turn 
+		if check_for_collapse():
+			if turn == TURN_XA or turn == TURN_XB:
+				turn = TURN_O_RESOLVE
+			elif turn == TURN_OA or turn == TURN_OB:
+				turn = TURN_X_RESOLVE
+			else:
+				print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
+		else:
+			if turn == TURN_XA:
+				turn = TURN_XB
+			elif turn == TURN_XB or turn == TURN_O_RESOLVE:
+				turn = TURN_OA
+				turn_number = turn_number + 1
+			elif turn == TURN_OA:
+				turn = TURN_OB
+			elif turn == TURN_OB or turn == TURN_X_RESOLVE:
+				turn = TURN_XA
+				turn_number = turn_number + 1
+			elif turn == TURN_GAME_OVER:
+				pass
+			else:
+				print("ERROR do not know how to increment turn ", TURN_DISPLAY[turn])
+		return old_turn
 # End game state class
 export(int) var width: = 3
 export(int) var height: = 3
@@ -415,7 +441,11 @@ func set_message_image(img):
 	
 func set_message_image_invisible():
 	$HelpImage1.visible = false
-	
+
+func clear_help_image():
+	set_message_image(help_image_empty)
+	set_message_image_invisible()
+
 # _init() and _ready()
 func _ready():
 	game_state = GameState.new(1, TURN_XA, [], QuantumGraph.new(), [])
@@ -453,73 +483,80 @@ func get_empty_tiles_for_classical(classical_board) -> Array:
 			_tiles.append(n)
 	return _tiles
 
-func increment_turn():
-	current_cell_focus = -1
-	if game_state.check_for_collapse():
-		set_message_image(help_image_empty)
-		set_message_image_invisible()
-		$AudioPlayer.stream = resolve_sound
-		$AudioPlayer.play()
-		$BoardCamera.add_trauma(0.5)
-		if game_state.turn == TURN_XA or game_state.turn == TURN_XB:
-			game_state.turn = TURN_O_RESOLVE
-			set_message_1(msg_computer_get_to_resolve)
-			set_message_2(msg_computer_get_to_resolve_2)
-			if GameSingleton.vs_computer:
-				make_computer_move()
-		elif game_state.turn == TURN_OA or game_state.turn == TURN_OB:
-			game_state.turn = TURN_X_RESOLVE
-			set_message_1(msg_you_get_to_resolve)
-			set_message_2(msg_you_get_to_resolve_2)
-		else:
-			print("ERROR do not know how move to collapse ", TURN_DISPLAY[game_state.turn])
-	else:
-		if game_state.turn == TURN_XA:
-			game_state.turn = TURN_XB
-			$AudioPlayer.stream = first_move_sound
-			$AudioPlayer.play()
-			if game_state.turn_number == 1:
-				set_message_1(msg_you_made_first_move)
-				set_message_2(msg_not_real)
-			else:
-				set_message_image(help_image_empty)
-				set_message_image_invisible()
-				set_message_2("")
-				set_message_1(msg_you_made_first_move)
-		elif game_state.turn == TURN_XB or game_state.turn == TURN_O_RESOLVE:
-			if game_state.turn == TURN_O_RESOLVE:
-				set_message_2("The computer chose a resolution.")				
-			else:
-				set_message_1("Now it is the computers turn")
-				set_message_2("")
+func resolve_effects():
+	clear_help_image()
+	$AudioPlayer.stream = resolve_sound
+	$AudioPlayer.play()
+	$BoardCamera.add_trauma(0.5)
 
-			game_state.turn = TURN_OA
-			game_state.turn_number = game_state.turn_number + 1
-			$AudioPlayer.stream = second_move_sound
-			$AudioPlayer.play()
-			set_message_image(help_image_empty)
-			set_message_image_invisible()
-		elif game_state.turn == TURN_OA:
-			$AudioPlayer.stream = computer_first_move_sound
-			$AudioPlayer.play()
-			game_state.turn = TURN_OB
-			set_message_2("")
-			set_message_1(msg_computer_first_move)
-		elif game_state.turn == TURN_OB or game_state.turn == TURN_X_RESOLVE:
-			game_state.turn = TURN_XA
-			game_state.turn_number = game_state.turn_number + 1
-			$AudioPlayer.stream = computer_second_move_sound
-			$AudioPlayer.play()
-			set_message_1(msg_computer_second_move)
-			set_message_2(msg_your_turn)
-		elif game_state.turn == TURN_GAME_OVER:
-			set_message_1("The game is over.")
-			set_message_2($WinLabel.text)
+func play(cell: Area2D):
+	# Verify there is not already a classical move here
+	var old_is_x = game_state.is_x_turn()
+	var old_turn_num = game_state.turn_number
+	var result_array = game_state.play_move(cell.board_index)
+	var move_made = result_array[0]
+	if !move_made:
+		return
+	
+	var new_quantum_scene = quantum_cell_scene.instance()
+	var new_quantum_sign = new_quantum_scene.get_node("Sign")
+	var new_quantum_label = new_quantum_scene.get_node("OrderLabel")
+	new_quantum_label.text = str(old_turn_num)
+	if old_is_x:
+		new_quantum_sign.visible = true
+		new_quantum_sign.texture = cross_quantum
+	else:
+		new_quantum_sign.visible = true
+		new_quantum_sign.texture = circle_quantum
+	cell.add_quantum_cell(new_quantum_scene)
+	
+	var old_turn = result_array[1]
+	var new_turn = result_array[2]
+	var new_turn_num = result_array[3]
+	current_cell_focus = -1
+		
+	if new_turn == TURN_O_RESOLVE:
+		resolve_effects()
+		set_message_1(msg_computer_get_to_resolve)
+		set_message_2(msg_computer_get_to_resolve_2)
+		if GameSingleton.vs_computer:
+			make_computer_move()
+	elif new_turn == TURN_X_RESOLVE:
+		resolve_effects()
+		set_message_1(msg_you_get_to_resolve)
+		set_message_2(msg_you_get_to_resolve_2)
+	elif new_turn == TURN_XA:
+		$AudioPlayer.stream = computer_second_move_sound
+		$AudioPlayer.play()
+		set_message_1(msg_computer_second_move)
+		set_message_2(msg_your_turn)
+	elif new_turn == TURN_XB:
+		$AudioPlayer.stream = first_move_sound
+		$AudioPlayer.play()
+		if new_turn_num == 1:
+			set_message_1(msg_you_made_first_move)
+			set_message_2(msg_not_real)
 		else:
-			print("ERROR do not know how to increment turn ", TURN_DISPLAY[game_state.turn])
+			clear_help_image()
+			set_message_2("")
+			set_message_1(msg_you_made_first_move)
+	elif new_turn == TURN_OA:
+		set_message_1("Now it is the computers turn")
+		set_message_2("")
+		$AudioPlayer.stream = second_move_sound
+		$AudioPlayer.play()
+		clear_help_image()
+	elif new_turn == TURN_OB:
+		$AudioPlayer.stream = computer_first_move_sound
+		$AudioPlayer.play()
+		set_message_1(msg_computer_first_move)
+		set_message_2("")
+	elif new_turn == TURN_GAME_OVER:
+		set_message_1($WinLabel.text)
+		set_message_2("The game is over.")
 	# Update the display
 	#$ModeValue.text = TURN_DISPLAY[game_state.turn]
-	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[game_state.turn_number]
+	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[new_turn_num]
 	if game_state.is_x_turn():
 		$TurnPlayerInfo/ValueSprite.texture = player_x
 	else:
@@ -539,28 +576,6 @@ func increment_turn():
 		$LabelSecondMove.visible = true
 		$LabelResolveMove.visible = false
 	# Set the messages accordingly
-
-func play(cell: Area2D):
-	# Verify there is not already a classical move here
-	var is_x = game_state.is_x_turn()
-	var turn_num = game_state.turn_number
-	var result = game_state.play_move(cell.board_index)
-	if !result:
-		return
-
-	var new_quantum_scene = quantum_cell_scene.instance()
-	var new_quantum_sign = new_quantum_scene.get_node("Sign")
-	var new_quantum_label = new_quantum_scene.get_node("OrderLabel")
-	new_quantum_label.text = str(turn_num)
-	if is_x:
-		new_quantum_sign.visible = true
-		new_quantum_sign.texture = cross_quantum
-	else:
-		new_quantum_sign.visible = true
-		new_quantum_sign.texture = circle_quantum
-	cell.add_quantum_cell(new_quantum_scene, is_x)
-	
-	increment_turn()
 
 	# If this is the only cell left, then make it classical and be done
 	#var empty_tiles = game_state.get_empty_tiles()
@@ -758,7 +773,7 @@ func on_cell_clicked(cell: Area2D):
 	if game_state.turn == TURN_X_RESOLVE:
 		if game_state.resolve_cells.contains(cell.board_index):
 			collapse_move(cell.board_index, game_state.resolve_key, true)
-			increment_turn()
+			# TODO increment_turn()
 		else:
 			print("The cell ", cell.board_index, " is not a resolve cell")
 			GameSingleton.display_nodes(game_state.resolve_cells)
@@ -821,7 +836,7 @@ func make_regular_computer_move():
 func delayed_computer_resolve():
 	print("computer resolve ", OS.get_ticks_msec())
 	collapse_move(computer_move_1, game_state.resolve_key, true)
-	increment_turn()
+	# TODO increment_turn()
 	var timer = get_tree().create_timer(3)
 	timer.connect("timeout",self,"make_regular_computer_move")
 

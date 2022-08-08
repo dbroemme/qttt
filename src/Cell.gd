@@ -83,7 +83,7 @@ func modulate_all_but_key(key, cell_info):
 			qc.is_modulated = true
 		count = count + 1
 	
-func add_quantum_cell(quantum_cell, is_x_turn):
+func add_quantum_cell(quantum_cell):
 	var x_extent = ($CollisionShape2D.shape.extents).x
 	var y_extent = ($CollisionShape2D.shape.extents).y
 	var x_base = -x_extent + 30

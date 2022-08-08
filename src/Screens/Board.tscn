@@ -200,9 +200,9 @@ __meta__ = {
 
 [node name="LabelResolveMove" type="RichTextLabel" parent="."]
 visible = false
-margin_left = 141.0
+margin_left = 585.0
 margin_top = -34.0
-margin_right = 287.0
+margin_right = 731.0
 margin_bottom = 6.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/mono_font = SubResource( 1 )
