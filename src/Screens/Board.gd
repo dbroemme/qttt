@@ -222,7 +222,9 @@ class GameState:
 		self.resolve_key = null
 		self.resolve_cells = Set.new()
 		self.resolve_chain = []
-		
+	
+	func increment_turn_number():
+		turn_number = turn_number + 1
 	func create_empty_board():
 		for n in range(0,9):
 			var new_cell = CellInfo.new()
@@ -372,11 +374,31 @@ class GameState:
 		for new_node in new_nodes:
 			quantum_graph.add_links(new_node)
 		#$TextLabel.text = quantum_graph.to_display()
-		print("--- After play ", turn_number, " mode: ", turn, "  key: ", new_move.key())
+		print("--- After play ", turn_number, " mode: ", turn, "  key: ", new_move.key(), " history: ", move_key_list)
 		print("Classical board: ", get_classical_board())
 		print_matrix()
 		var old_turn = increment_turn()
 		return [true, old_turn, turn, turn_number]
+		
+	func play_resolve(board_index, key):
+		# Update the data structures
+		var cell_info = matrix[board_index]
+		var other_moves = cell_info.make_classical(key)
+
+		quantum_graph.remove_key(key)
+		var index_to_delete = move_key_list.find(key)
+		move_key_list.remove(index_to_delete)
+
+		var resolved_node = null
+		for possible_index in range(0, resolve_chain.size()):
+			var possible_node = resolve_chain[possible_index]
+			if possible_node.begin_key == key:
+				resolved_node = possible_node
+		if resolved_node != null:
+			resolve_chain.erase(resolved_node)
+			print("Removed chain node: ", resolved_node)
+			
+		return other_moves
 
 	func print_matrix():
 		print(pad(matrix[0].to_display()), "  |  ", pad(matrix[1].to_display()), "  |  ", pad(matrix[2].to_display()))
@@ -402,18 +424,19 @@ class GameState:
 				turn = TURN_XB
 			elif turn == TURN_XB or turn == TURN_O_RESOLVE:
 				turn = TURN_OA
-				turn_number = turn_number + 1
+				increment_turn_number()
 			elif turn == TURN_OA:
 				turn = TURN_OB
 			elif turn == TURN_OB or turn == TURN_X_RESOLVE:
 				turn = TURN_XA
-				turn_number = turn_number + 1
+				increment_turn_number()
 			elif turn == TURN_GAME_OVER:
 				pass
 			else:
 				print("ERROR do not know how to increment turn ", TURN_DISPLAY[turn])
 		return old_turn
 # End game state class
+
 export(int) var width: = 3
 export(int) var height: = 3
 
@@ -514,7 +537,9 @@ func play(cell: Area2D):
 	var new_turn = result_array[2]
 	var new_turn_num = result_array[3]
 	current_cell_focus = -1
-		
+	update_gui_after_turn(old_turn, new_turn, new_turn_num)
+
+func update_gui_after_turn(old_turn, new_turn, new_turn_num):
 	if new_turn == TURN_O_RESOLVE:
 		resolve_effects()
 		set_message_1(msg_computer_get_to_resolve)
@@ -603,20 +628,9 @@ func collapse_move(chosen_board_index, key, is_top_level):
 	# but the chosen_board_index was chosen
 	# That means the other one probably goes to another move in the chain node
 	print("Collapse cell ", chosen_board_index, " for move ", key)
-	# Update the data structures
-	var cell_info = game_state.matrix[chosen_board_index]
-	var other_moves = cell_info.make_classical(key)
-	game_state.quantum_graph.remove_key(key)
-	var index_to_delete = game_state.move_key_list.find(key)
-	game_state.move_key_list.remove(index_to_delete)
-	var resolved_node = null
-	for possible_index in range(0, game_state.resolve_chain.size()):
-		var possible_node = game_state.resolve_chain[possible_index]
-		if possible_node.begin_key == key:
-			resolved_node = possible_node
-	if resolved_node != null:
-		game_state.resolve_chain.erase(resolved_node)
-		print("Removed chain node: ", resolved_node)
+
+	var other_moves = game_state.play_resolve(chosen_board_index, key)
+
 	# Update the GUI
 	cell.make_classical(is_move_player(key))
 	var classical_board = game_state.get_classical_board()
@@ -773,7 +787,9 @@ func on_cell_clicked(cell: Area2D):
 	if game_state.turn == TURN_X_RESOLVE:
 		if game_state.resolve_cells.contains(cell.board_index):
 			collapse_move(cell.board_index, game_state.resolve_key, true)
-			# TODO increment_turn()
+			game_state.turn = TURN_XA
+			game_state.increment_turn_number()
+			update_gui_after_turn(TURN_X_RESOLVE, TURN_XA, game_state.turn_number)
 		else:
 			print("The cell ", cell.board_index, " is not a resolve cell")
 			GameSingleton.display_nodes(game_state.resolve_cells)
@@ -788,6 +804,8 @@ func on_cell_clicked(cell: Area2D):
 			if game_state.resolve_cells.contains(cell.board_index):
 				collapse_move(cell.board_index, game_state.resolve_key, true)
 				game_state.turn = TURN_OA
+				game_state.increment_turn_number()
+				update_gui_after_turn(TURN_O_RESOLVE, TURN_XA, game_state.turn_number)
 			else:
 				print("The cell ", cell.board_index, " is not a resolve cell")
 				GameSingleton.display_nodes(game_state.resolve_cells)
