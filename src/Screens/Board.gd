@@ -334,6 +334,59 @@ class GameState:
 		resolve_key = move_key
 		resolve_cells = derive_resolve_cells(resolve_key)
 
+	func player_value():
+		if turn < TURN_OA:
+			return 1
+		return -1
+
+	func player_letter():
+		if turn < TURN_OA:
+			return "X"
+		if turn < TURN_GAME_OVER:
+			return "O"
+		return "-"
+
+	func create_move_instance():
+		var new_move = Move.new()
+		new_move.player = player_value()
+		new_move.order = turn_number
+		new_move.is_classical = false
+		return new_move
+	
+	func play_move(board_index):
+		# Verify there is not already a classical move here
+		var cell_info = matrix[board_index]
+		if !cell_info.is_quantum():
+			print("ERROR cannot make a move in classical cell ", board_index)
+			return false
+	
+		var new_move = create_move_instance()
+		if cell_info.has_move(new_move.key()):
+			return false
+			
+		if is_first_choice():
+			move_key_list.append(new_move.key())
+
+		var new_nodes = cell_info.add_move(turn_number, player_value())
+		quantum_graph.add_nodes(new_nodes)
+		for new_node in new_nodes:
+			quantum_graph.add_links(new_node)
+		#$TextLabel.text = quantum_graph.to_display()
+		print("--- After play ", turn_number, " mode: ", turn, "  key: ", new_move.key())
+		print("Classical board: ", get_classical_board())
+		print_matrix()
+		return true
+
+	func print_matrix():
+		print(pad(matrix[0].to_display()), "  |  ", pad(matrix[1].to_display()), "  |  ", pad(matrix[2].to_display()))
+		print("----------------  |  ----------------  |  ----------------")
+		print(pad(matrix[3].to_display()), "  |  ", pad(matrix[4].to_display()), "  |  ", pad(matrix[5].to_display()))
+		print("----------------  |  ----------------  |  ----------------")
+		print(pad(matrix[6].to_display()), "  |  ", pad(matrix[7].to_display()), "  |  ", pad(matrix[8].to_display()))
+
+	func pad(val):
+		return "%16s" % val
+
 # End game state class
 export(int) var width: = 3
 export(int) var height: = 3
@@ -399,18 +452,6 @@ func get_empty_tiles_for_classical(classical_board) -> Array:
 		if classical_board[n] == 0:
 			_tiles.append(n)
 	return _tiles
-
-func player_letter(state):
-	if state.turn < TURN_OA:
-		return "X"
-	if state.turn < TURN_GAME_OVER:
-		return "O"
-	return "-"
-
-func player_value(state):
-	if state.turn < TURN_OA:
-		return 1
-	return -1
 
 func increment_turn():
 	current_cell_focus = -1
@@ -501,61 +542,35 @@ func increment_turn():
 
 func play(cell: Area2D):
 	# Verify there is not already a classical move here
-	var cell_info = game_state.matrix[cell.board_index]
-	if !cell_info.is_quantum():
-		print("ERROR cannot make a move in classical cell ", cell.board_index)
-		return true
-	
-	var new_move = create_move_instance(player_value(game_state))
-	if cell_info.has_move(new_move.key()):
+	var is_x = game_state.is_x_turn()
+	var turn_num = game_state.turn_number
+	var result = game_state.play_move(cell.board_index)
+	if !result:
 		return
 
-	make_move(cell, cell_info, new_move)
-
-	print("--- After play ", game_state.turn_number, "  key: ", new_move.key())
-	print("Classical board: ", game_state.get_classical_board())
-	
-	increment_turn()
-
-
-func create_move_instance(player_val):
-	var new_move = Move.new()
-	new_move.player = player_val
-	new_move.order = game_state.turn_number
-	new_move.is_classical = false
-	return new_move
-	
-func make_move(cell: Area2D, cell_info, new_move):
 	var new_quantum_scene = quantum_cell_scene.instance()
 	var new_quantum_sign = new_quantum_scene.get_node("Sign")
 	var new_quantum_label = new_quantum_scene.get_node("OrderLabel")
-	new_quantum_label.text = str(game_state.turn_number)
-	if game_state.is_x_turn():
+	new_quantum_label.text = str(turn_num)
+	if is_x:
 		new_quantum_sign.visible = true
 		new_quantum_sign.texture = cross_quantum
 	else:
 		new_quantum_sign.visible = true
 		new_quantum_sign.texture = circle_quantum
-
-	cell.add_quantum_cell(new_quantum_scene, game_state.is_x_turn())
-	if game_state.is_first_choice():
-		game_state.move_key_list.append(new_move.key())
+	cell.add_quantum_cell(new_quantum_scene, is_x)
+	
+	increment_turn()
 
 	# If this is the only cell left, then make it classical and be done
-	var empty_tiles = game_state.get_empty_tiles()
-	if empty_tiles.size() == 1 and empty_tiles[0] == cell.board_index:
+	#var empty_tiles = game_state.get_empty_tiles()
+	#if empty_tiles.size() == 1 and empty_tiles[0] == cell.board_index:
 		# This was the last open cell, so it goes to the player whose turn it is
-		cell_info.make_classical(new_move.key())
-		collapse_move(cell.board_index, new_move.key(), true)
-		var result = check_victory(game_state.get_classical_board())
-		end_game(result)
-		return
-
-	var new_nodes = cell_info.add_move(game_state.turn_number, player_value(game_state))
-	game_state.quantum_graph.add_nodes(new_nodes)
-	for new_node in new_nodes:
-		game_state.quantum_graph.add_links(new_node)
-	#$TextLabel.text = game_state.quantum_graph.to_display()
+	#	cell_info.make_classical(new_move.key())
+	#	collapse_move(cell.board_index, new_move.key(), true)
+	#	var result = check_victory(game_state.get_classical_board())
+	#	end_game(result)
+	#	return
 
 func is_move_player(key):
 	var player_part_of_str = key.left(1)
@@ -968,7 +983,7 @@ func get_remaining_corners(matrix):
 	return list
 
 func real_agent_moves(matrix, turn_number):
-	print_matrix(matrix)
+	game_state.print_matrix()
 	var new_moves = []
 	if turn_number == 2:
 		# On the first move, grab two open corners
@@ -1101,13 +1116,4 @@ func computer_create_move_instance(player_val, turn_number):
 	new_move.is_classical = false
 	return new_move
 
-func print_matrix(matrix):
-	print(pad(matrix[0].to_display()), "  |  ", pad(matrix[1].to_display()), "  |  ", pad(matrix[2].to_display()))
-	print("----------------  |  ----------------  |  ----------------")
-	print(pad(matrix[3].to_display()), "  |  ", pad(matrix[4].to_display()), "  |  ", pad(matrix[5].to_display()))
-	print("----------------  |  ----------------  |  ----------------")
-	print(pad(matrix[6].to_display()), "  |  ", pad(matrix[7].to_display()), "  |  ", pad(matrix[8].to_display()))
-
-func pad(val):
-	return "%16s" % val
 	
