@@ -3,17 +3,17 @@ extends Area2D
 signal clicked
 signal focus
 
+export(int) var board_index
+
 onready var cross: = preload("res://asset/x.png")
 onready var circle: = preload("res://asset/o.png")
 onready var particle_scene = preload("res://src/ParticleEffect.tscn")
 
-var board_index
 var quantum_cells
 var classical
 var new_particle_effect
 
 func _ready():
-	board_index = -1
 	quantum_cells = []
 	classical = false
 	initial_hide()
@@ -124,8 +124,8 @@ func _on_mouse_entered():
 func _on_mouse_exited():
 	if not classical:
 		#Input.set_default_cursor_shape(0)
-		if get_parent().is_resolve_mode():
-			if get_parent().resolve_cells.contains(board_index):
+		if get_parent().game_state.is_resolve_mode():
+			if get_parent().game_state.resolve_cells.contains(board_index):
 				# TODO we just want to clear the focus on the one quantum cell
 				# The rest we want to stay blurred out
 				clear_focus()

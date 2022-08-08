@@ -63,63 +63,42 @@ scale = Vector2( 1.25, 1.25 )
 [node name="Cell2" parent="." instance=ExtResource( 3 )]
 position = Vector2( 417, 103.522 )
 scale = Vector2( 1.25, 1.25 )
+board_index = 1
 
 [node name="Cell3" parent="." instance=ExtResource( 3 )]
 position = Vector2( 616, 103.522 )
 scale = Vector2( 1.25, 1.25 )
+board_index = 2
 
 [node name="Cell4" parent="." instance=ExtResource( 3 )]
 position = Vector2( 220.768, 294.732 )
 scale = Vector2( 1.25, 1.25 )
+board_index = 3
 
 [node name="Cell5" parent="." instance=ExtResource( 3 )]
 position = Vector2( 417, 294.732 )
 scale = Vector2( 1.25, 1.25 )
+board_index = 4
 
 [node name="Cell6" parent="." instance=ExtResource( 3 )]
 position = Vector2( 616, 294.732 )
 scale = Vector2( 1.25, 1.25 )
+board_index = 5
 
 [node name="Cell7" parent="." instance=ExtResource( 3 )]
 position = Vector2( 220.768, 487.522 )
 scale = Vector2( 1.25, 1.25 )
+board_index = 6
 
 [node name="Cell8" parent="." instance=ExtResource( 3 )]
 position = Vector2( 417, 487.522 )
 scale = Vector2( 1.25, 1.25 )
+board_index = 7
 
 [node name="Cell9" parent="." instance=ExtResource( 3 )]
 position = Vector2( 616, 487.522 )
 scale = Vector2( 1.25, 1.25 )
-
-[node name="TextLabel" type="RichTextLabel" parent="."]
-visible = false
-margin_left = -220.0
-margin_top = 27.0
-margin_right = 10.0
-margin_bottom = 487.0
-text = "Hi
-"
-
-[node name="ModeLabel" type="RichTextLabel" parent="."]
-visible = false
-margin_left = 601.0
-margin_top = 33.0
-margin_right = 731.0
-margin_bottom = 48.0
-text = "Mode
-"
-scroll_active = false
-
-[node name="ModeValue" type="RichTextLabel" parent="."]
-visible = false
-margin_left = 602.0
-margin_top = 62.0
-margin_right = 732.0
-margin_bottom = 77.0
-text = "
-"
-scroll_active = false
+board_index = 8
 
 [node name="HistoryText" type="RichTextLabel" parent="."]
 visible = false

@@ -8,8 +8,8 @@ var TURN_OA = 3
 var TURN_OB = 4
 var TURN_X_RESOLVE = 5
 var TURN_GAME_OVER = 6
-var turn
 var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER"]
+
 var message_1 = ""
 var message_2 = ""
 var current_cell_focus = -1
@@ -193,24 +193,159 @@ class CellInfo:
 			new_nodes.append(backward_node)
 		moves.append(new_move)
 		return new_nodes
+		
+class GameState:
+	var turn_number
+	var turn
+	var matrix
+	var quantum_graph
+	var move_key_list
+	var resolve_key
+	var resolve_cells
+	var resolve_chain
+	var board_indexes_that_will_collapse
+	var TURN_XA = 0
+	var TURN_XB = 1
+	var TURN_O_RESOLVE = 2
+	var TURN_OA = 3
+	var TURN_OB = 4
+	var TURN_X_RESOLVE = 5
+	var TURN_GAME_OVER = 6
+	var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER"]
 
+	func _init(turn_num, turn_state, matrix_copy, graph, move_list):
+		self.turn_number = turn_num
+		self.turn = turn_state
+		self.matrix = matrix_copy
+		self.quantum_graph = graph
+		self.move_key_list = move_list
+		self.resolve_key = null
+		self.resolve_cells = Set.new()
+		self.resolve_chain = []
+		
+	func create_empty_board():
+		for n in range(0,9):
+			var new_cell = CellInfo.new()
+			new_cell.board_index = n
+			matrix.append(new_cell)
+
+	func is_x_turn():
+		if turn == TURN_XA or turn == TURN_XB or turn == TURN_X_RESOLVE:
+			return true
+		return false
+
+	func is_first_choice():
+		if turn == TURN_XA or turn == TURN_OA:
+			return true
+		return false
+	
+	func is_resolve_mode():
+		if turn == TURN_X_RESOLVE or turn == TURN_O_RESOLVE:
+			return true
+		return false
+
+	func choice_letter():
+		if turn == TURN_XA or turn == TURN_OA:
+			return "A"
+		if turn == TURN_XB or turn == TURN_OB:
+			return "B"
+		return "-"
+
+	func get_empty_tiles() -> Array:
+		var classical_board = get_classical_board()
+		var _tiles: Array
+		for n in range(0,9):
+			if classical_board[n] == 0:
+				_tiles.append(n)
+		return _tiles
+
+	func get_classical_board():
+		var list = []
+		for cell_info in matrix:
+			list.append(cell_info.get_value())
+		return list
+
+	func derive_resolve_cells(key):
+		# Get the two tiles where this move exists
+		var nodes_with_key = quantum_graph.forward_dict[key]
+		var cell_set = Set.new()
+		for node_with_key in nodes_with_key:
+			cell_set.add(node_with_key.board_index)
+		return cell_set
+
+	func find_cells_with_quantum_move(key):
+		var result = []
+		for index in matrix.size():
+			var cell_info = matrix[index]
+			if cell_info.has_move(key):
+				result.append(index)
+		return result
+
+	func find_all_cells_that_will_collapse(resolve_chain):
+		# I don't think it matters which of the two we use
+		board_indexes_that_will_collapse = Set.new()
+		print("find cells that will collapse ", resolve_key)
+		recurse_find_all_collapse(resolve_key, Set.new(), board_indexes_that_will_collapse)
+		print("found number ", board_indexes_that_will_collapse.size())
+
+	func recurse_find_all_collapse(key, key_set, board_indexes):
+		# Return a list of board indexes that will collapse
+		# Just walk the tree of moves through cell info
+		key_set.add(key)
+		var cell_infos = get_cell_infos_with_move(key)
+		for ci in cell_infos:
+			board_indexes.add(ci.board_index)
+			var other_moves = ci.hypothetical_classical(key)
+			for other_move in other_moves:
+				if !key_set.contains(other_move):
+					recurse_find_all_collapse(other_move, key_set, board_indexes)
+
+	func get_cell_infos_with_move(key):
+		var cell_info_with_key = []
+		for index in matrix.size():
+			var cell_info = matrix[index]
+			if cell_info.has_move(key):
+				cell_info_with_key.append(cell_info)
+		return cell_info_with_key
+
+	func check_for_collapse() -> bool:
+		var cycle_display = ""
+		for x in move_key_list.size():
+			var move_key = move_key_list[-x-1]
+			var traverse = quantum_graph.is_cycle(move_key)
+			if traverse.is_cycle:
+				print(move_key, " caused a cycle. Need to resolve")
+				#$TextLabel.text = quantum_graph.to_display()
+				resolve_chain = traverse.list
+				print("The resolve chain is ", resolve_chain.size(), " items")
+				GameSingleton.display_nodes(resolve_chain)
+				prepare_for_collapse_move(move_key)
+				find_all_cells_that_will_collapse(resolve_chain)
+				return true
+			else:
+				cycle_display = cycle_display + move_key + ": " + str(traverse.is_cycle) + "\n"
+		print(cycle_display)
+		#$TextLabel.text = game_state.quantum_graph.to_display()
+		#for k in game_state.quantum_graph.forward_dict.keys():
+		#	$TextLabel.text = $TextLabel.text + "\n" + k
+		return false
+
+	func prepare_for_collapse_move(move_key):
+		resolve_key = move_key
+		resolve_cells = derive_resolve_cells(resolve_key)
+
+# End game state class
 export(int) var width: = 3
 export(int) var height: = 3
 
-var turn_number
-var matrix
-var quantum_graph
-var move_key_list
-var resolve_key
-var resolve_cells
-var resolve_chain
 var computer_move_1
 var computer_move_2
-var computer_strategy
 
 # Old agent variables
 var stats = {}
 var visited_nodes: = 0
+
+var game_state
 
 func set_message_1(text_value):
 	message_1 = text_value
@@ -230,6 +365,9 @@ func set_message_image_invisible():
 	
 # _init() and _ready()
 func _ready():
+	game_state = GameState.new(1, TURN_XA, [], QuantumGraph.new(), [])
+	game_state.create_empty_board()
+
 	$HistoryText.text = ""
 	$TurnNumberInfo/Label.bbcode_text = "[center]Turn Number[center]"
 	$TurnPlayerInfo/Label.bbcode_text = "[center]Player Turn[center]"
@@ -247,96 +385,59 @@ func _ready():
 	$LabelSecondMove.modulate = Color(1,1,1,0.5)
 	set_message_1(msg_initial_1)
 	set_message_2(msg_initial_2)
-
-	quantum_graph = QuantumGraph.new()
-	matrix = []
-	move_key_list = []
-	turn = TURN_XA
-	turn_number = 1
-	resolve_cells = Set.new()
+	
 	for cell in get_tree().get_nodes_in_group("cells"):
-		cell.board_index = matrix.size()
 		cell.connect("clicked", self, "on_cell_clicked")
 		cell.connect("focus", self, "on_cell_focus")
-		var new_cell = CellInfo.new()
-		new_cell.board_index = matrix.size()
-		matrix.append(new_cell)
 
 func _process(delta):
 	pass
 
-func get_classical_board():
-	var list = []
-	for cell_info in matrix:
-		list.append(cell_info.get_value())
-	return list
+func get_empty_tiles_for_classical(classical_board) -> Array:
+	var _tiles: Array
+	for n in range(0,9):
+		if classical_board[n] == 0:
+			_tiles.append(n)
+	return _tiles
 
-func is_x_turn():
-	if turn == TURN_XA or turn == TURN_XB or turn == TURN_X_RESOLVE:
-		return true
-	return false
-
-func is_first_choice():
-	if turn == TURN_XA or turn == TURN_OA:
-		return true
-	return false
-
-func is_resolve_mode():
-	if turn == TURN_X_RESOLVE or turn == TURN_O_RESOLVE:
-		return true
-	return false
-
-func player_letter():
-	if turn < TURN_OA:
+func player_letter(state):
+	if state.turn < TURN_OA:
 		return "X"
-	if turn < TURN_GAME_OVER:
+	if state.turn < TURN_GAME_OVER:
 		return "O"
 	return "-"
 
-func player_value():
-	if turn < TURN_OA:
+func player_value(state):
+	if state.turn < TURN_OA:
 		return 1
 	return -1
 
-func choice_letter():
-	if turn == TURN_XA or turn == TURN_OA:
-		return "A"
-	if turn == TURN_XB or turn == TURN_OB:
-		return "B"
-	return "-"
-
-func update_move_history(board_index):
-	if is_first_choice():
-		$HistoryText.text = $HistoryText.text + player_letter() + str(turn_number) + ": " + str(board_index)
-	else:
-		$HistoryText.text = $HistoryText.text + ", " + str(board_index) + "\n"
-
 func increment_turn():
 	current_cell_focus = -1
-	if check_for_collapse():
+	if game_state.check_for_collapse():
 		set_message_image(help_image_empty)
 		set_message_image_invisible()
 		$AudioPlayer.stream = resolve_sound
 		$AudioPlayer.play()
 		$BoardCamera.add_trauma(0.5)
-		if turn == TURN_XA or turn == TURN_XB:
-			turn = TURN_O_RESOLVE
+		if game_state.turn == TURN_XA or game_state.turn == TURN_XB:
+			game_state.turn = TURN_O_RESOLVE
 			set_message_1(msg_computer_get_to_resolve)
 			set_message_2(msg_computer_get_to_resolve_2)
-			if GameState.vs_computer:
+			if GameSingleton.vs_computer:
 				make_computer_move()
-		elif turn == TURN_OA or turn == TURN_OB:
-			turn = TURN_X_RESOLVE
+		elif game_state.turn == TURN_OA or game_state.turn == TURN_OB:
+			game_state.turn = TURN_X_RESOLVE
 			set_message_1(msg_you_get_to_resolve)
 			set_message_2(msg_you_get_to_resolve_2)
 		else:
-			print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
+			print("ERROR do not know how move to collapse ", TURN_DISPLAY[game_state.turn])
 	else:
-		if turn == TURN_XA:
-			turn = TURN_XB
+		if game_state.turn == TURN_XA:
+			game_state.turn = TURN_XB
 			$AudioPlayer.stream = first_move_sound
 			$AudioPlayer.play()
-			if turn_number == 1:
+			if game_state.turn_number == 1:
 				set_message_1(msg_you_made_first_move)
 				set_message_2(msg_not_real)
 			else:
@@ -344,50 +445,50 @@ func increment_turn():
 				set_message_image_invisible()
 				set_message_2("")
 				set_message_1(msg_you_made_first_move)
-		elif turn == TURN_XB or turn == TURN_O_RESOLVE:
-			if turn == TURN_O_RESOLVE:
+		elif game_state.turn == TURN_XB or game_state.turn == TURN_O_RESOLVE:
+			if game_state.turn == TURN_O_RESOLVE:
 				set_message_2("The computer chose a resolution.")				
 			else:
 				set_message_1("Now it is the computers turn")
 				set_message_2("")
 
-			turn = TURN_OA
-			turn_number = turn_number + 1
+			game_state.turn = TURN_OA
+			game_state.turn_number = game_state.turn_number + 1
 			$AudioPlayer.stream = second_move_sound
 			$AudioPlayer.play()
 			set_message_image(help_image_empty)
 			set_message_image_invisible()
-		elif turn == TURN_OA:
+		elif game_state.turn == TURN_OA:
 			$AudioPlayer.stream = computer_first_move_sound
 			$AudioPlayer.play()
-			turn = TURN_OB
+			game_state.turn = TURN_OB
 			set_message_2("")
 			set_message_1(msg_computer_first_move)
-		elif turn == TURN_OB or turn == TURN_X_RESOLVE:
-			turn = TURN_XA
-			turn_number = turn_number + 1
+		elif game_state.turn == TURN_OB or game_state.turn == TURN_X_RESOLVE:
+			game_state.turn = TURN_XA
+			game_state.turn_number = game_state.turn_number + 1
 			$AudioPlayer.stream = computer_second_move_sound
 			$AudioPlayer.play()
 			set_message_1(msg_computer_second_move)
 			set_message_2(msg_your_turn)
-		elif turn == TURN_GAME_OVER:
+		elif game_state.turn == TURN_GAME_OVER:
 			set_message_1("The game is over.")
 			set_message_2($WinLabel.text)
 		else:
-			print("ERROR do not know how to increment turn ", TURN_DISPLAY[turn])
+			print("ERROR do not know how to increment turn ", TURN_DISPLAY[game_state.turn])
 	# Update the display
-	$ModeValue.text = TURN_DISPLAY[turn]
-	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[turn_number]
-	if is_x_turn():
+	#$ModeValue.text = TURN_DISPLAY[game_state.turn]
+	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[game_state.turn_number]
+	if game_state.is_x_turn():
 		$TurnPlayerInfo/ValueSprite.texture = player_x
 	else:
 		$TurnPlayerInfo/ValueSprite.texture = player_o
-	if is_first_choice():
+	if game_state.is_first_choice():
 		$LabelFirstMove.visible = true
 		$LabelFirstMove.modulate = Color(1,1,1,1)
 		$LabelSecondMove.visible = false
 		$LabelResolveMove.visible = false
-	elif is_resolve_mode():
+	elif game_state.is_resolve_mode():
 		$LabelFirstMove.visible = false
 		$LabelSecondMove.visible = false
 		$LabelResolveMove.visible = true		
@@ -400,21 +501,19 @@ func increment_turn():
 
 func play(cell: Area2D):
 	# Verify there is not already a classical move here
-	var cell_info = matrix[cell.board_index]
+	var cell_info = game_state.matrix[cell.board_index]
 	if !cell_info.is_quantum():
 		print("ERROR cannot make a move in classical cell ", cell.board_index)
 		return true
 	
-	var new_move = create_move_instance(player_value())
+	var new_move = create_move_instance(player_value(game_state))
 	if cell_info.has_move(new_move.key()):
 		return
 
 	make_move(cell, cell_info, new_move)
 
-	update_move_history(cell.board_index)
-
-	print("--- After play ", turn_number, "  key: ", new_move.key())
-	print("Classical board: ", get_classical_board())
+	print("--- After play ", game_state.turn_number, "  key: ", new_move.key())
+	print("Classical board: ", game_state.get_classical_board())
 	
 	increment_turn()
 
@@ -422,7 +521,7 @@ func play(cell: Area2D):
 func create_move_instance(player_val):
 	var new_move = Move.new()
 	new_move.player = player_val
-	new_move.order = turn_number
+	new_move.order = game_state.turn_number
 	new_move.is_classical = false
 	return new_move
 	
@@ -430,87 +529,34 @@ func make_move(cell: Area2D, cell_info, new_move):
 	var new_quantum_scene = quantum_cell_scene.instance()
 	var new_quantum_sign = new_quantum_scene.get_node("Sign")
 	var new_quantum_label = new_quantum_scene.get_node("OrderLabel")
-	new_quantum_label.text = str(turn_number)
-	if is_x_turn():
+	new_quantum_label.text = str(game_state.turn_number)
+	if game_state.is_x_turn():
 		new_quantum_sign.visible = true
 		new_quantum_sign.texture = cross_quantum
 	else:
 		new_quantum_sign.visible = true
 		new_quantum_sign.texture = circle_quantum
 
-	cell.add_quantum_cell(new_quantum_scene, is_x_turn())
-	if is_first_choice():
-		move_key_list.append(new_move.key())
+	cell.add_quantum_cell(new_quantum_scene, game_state.is_x_turn())
+	if game_state.is_first_choice():
+		game_state.move_key_list.append(new_move.key())
 
 	# If this is the only cell left, then make it classical and be done
-	var empty_tiles = get_empty_tiles(get_classical_board())
+	var empty_tiles = game_state.get_empty_tiles()
 	if empty_tiles.size() == 1 and empty_tiles[0] == cell.board_index:
 		# This was the last open cell, so it goes to the player whose turn it is
 		cell_info.make_classical(new_move.key())
 		collapse_move(cell.board_index, new_move.key(), true)
-		var result = check_victory(get_classical_board())
+		var result = check_victory(game_state.get_classical_board())
 		end_game(result)
 		return
 
-	var new_nodes = cell_info.add_move(turn_number, player_value())
-	quantum_graph.add_nodes(new_nodes)
+	var new_nodes = cell_info.add_move(game_state.turn_number, player_value(game_state))
+	game_state.quantum_graph.add_nodes(new_nodes)
 	for new_node in new_nodes:
-		quantum_graph.add_links(new_node)
-	$TextLabel.text = quantum_graph.to_display()
+		game_state.quantum_graph.add_links(new_node)
+	#$TextLabel.text = game_state.quantum_graph.to_display()
 
-func check_for_collapse() -> bool:
-	var cycle_display = ""
-	for x in move_key_list.size():
-		var move_key = move_key_list[-x-1]
-		var traverse = quantum_graph.is_cycle(move_key)
-		if traverse.is_cycle:
-			print(move_key, " caused a cycle")
-			print("Need to resolve ", move_key)
-			$TextLabel.text = quantum_graph.to_display()
-			resolve_chain = traverse.list
-			print("The resolve chain is ", resolve_chain.size(), " items")
-			display_nodes(resolve_chain)
-			prepare_for_collapse_move(move_key)
-			find_all_cells_that_will_collapse(resolve_chain)
-			return true
-		else:
-			cycle_display = cycle_display + move_key + ": " + str(traverse.is_cycle) + "\n"
-	print(cycle_display)
-	$TextLabel.text = quantum_graph.to_display()
-	for k in quantum_graph.forward_dict.keys():
-		$TextLabel.text = $TextLabel.text + "\n" + k
-	return false
-
-func find_all_cells_that_will_collapse(resolve_chain):
-	# I don't think it matters which of the two we use
-	var board_indexes = Set.new()
-	print("find cells that will collapse ", resolve_key)
-	recurse_find_all_collapse(resolve_key, Set.new(), board_indexes)
-	print("found number ", board_indexes.size())
-	for n in board_indexes.elements():
-		var the_cell = get_cell_by_index(n)
-		the_cell.highlight()
-
-func get_cell_infos_with_move(key):
-	var cell_info_with_key = []
-	for index in matrix.size():
-		var cell_info = matrix[index]
-		if cell_info.has_move(key):
-			cell_info_with_key.append(cell_info)
-	return cell_info_with_key
-
-func recurse_find_all_collapse(key, key_set, board_indexes):
-	# Return a list of board indexes that will collapse
-	# Just walk the tree of moves through cell info
-	key_set.add(key)
-	var cell_infos = get_cell_infos_with_move(key)
-	for ci in cell_infos:
-		board_indexes.add(ci.board_index)
-		var other_moves = ci.hypothetical_classical(key)
-		for other_move in other_moves:
-			if !key_set.contains(other_move):
-				recurse_find_all_collapse(other_move, key_set, board_indexes)
-				
 func is_move_player(key):
 	var player_part_of_str = key.left(1)
 	if player_part_of_str == "X":
@@ -518,82 +564,47 @@ func is_move_player(key):
 	elif player_part_of_str == "O":
 		return false
 
-func is_players_resolve_choice():
-	var player_part_of_str = resolve_key.left(1)
-	if player_part_of_str == "X":
-		return false
-	elif player_part_of_str == "O":
-		return true
-	else:
-		print("ERROR ", player_part_of_str, " is not X or O")
 
-func derive_resolve_cells(key):
-	# Get the two tiles where this move exists
-	var nodes_with_key = quantum_graph.forward_dict[key]
-	var cell_set = Set.new()
-	for node_with_key in nodes_with_key:
-		cell_set.add(node_with_key.board_index)
-	return cell_set
-
-func find_cells_with_quantum_move(key):
-	var result = []
-	for index in matrix.size():
-		var cell_info = matrix[index]
-		if cell_info.has_move(key):
-			result.append(index)
-	return result
-	
-func prepare_for_collapse_move(move_key):
-	resolve_key = move_key
-	resolve_cells = derive_resolve_cells(resolve_key)
-
-	for cell in get_tree().get_nodes_in_group("cells"):
-		cell.clear_placeholder()
-		if !resolve_cells.contains(cell.board_index):
-			cell.modulate = Color(1,1,1,0.5)
-		else:
-			var cell_info = matrix[cell.board_index]
-			cell.modulate_all_but_key(resolve_key, cell_info)
 
 func collapse_move(chosen_board_index, key, is_top_level):
-	var cell = get_cell_by_index(chosen_board_index)
+	var cell = get_gui_cell_by_index(chosen_board_index)
 	cell.highlight_chosen()
 	# The resolve_key move exists in both resolve_cells.elements()
 	# but the chosen_board_index was chosen
 	# That means the other one probably goes to another move in the chain node
 	print("Collapse cell ", chosen_board_index, " for move ", key)
 	# Update the data structures
-	var cell_info = matrix[chosen_board_index]
+	var cell_info = game_state.matrix[chosen_board_index]
 	var other_moves = cell_info.make_classical(key)
-	quantum_graph.remove_key(key)
-	var index_to_delete = move_key_list.find(key)
-	move_key_list.remove(index_to_delete)
+	game_state.quantum_graph.remove_key(key)
+	var index_to_delete = game_state.move_key_list.find(key)
+	game_state.move_key_list.remove(index_to_delete)
 	var resolved_node = null
-	for possible_index in range(0, resolve_chain.size()):
-		var possible_node = resolve_chain[possible_index]
+	for possible_index in range(0, game_state.resolve_chain.size()):
+		var possible_node = game_state.resolve_chain[possible_index]
 		if possible_node.begin_key == key:
 			resolved_node = possible_node
 	if resolved_node != null:
-		resolve_chain.erase(resolved_node)
+		game_state.resolve_chain.erase(resolved_node)
 		print("Removed chain node: ", resolved_node)
 	# Update the GUI
 	cell.make_classical(is_move_player(key))
-	var classical_board = get_classical_board()
+	var classical_board = game_state.get_classical_board()
 	print("Classical board: ", classical_board)
 
 	var win_result = check_victory(classical_board)
-	if win_result != 0 or get_empty_tiles(classical_board).size() == 0:
+	if win_result != 0 or game_state.get_empty_tiles().size() == 0:
 		end_game(win_result)
 	else:
 		print("Other moves: ", other_moves.size())
 		for other_move in other_moves:
 			print("  consider ", other_move)
-			if move_key_list.has(other_move):
+			if game_state.move_key_list.has(other_move):
 				print("  do need to recon ", other_move)
-				var possible_board_indexes = find_cells_with_quantum_move(other_move)
+				var possible_board_indexes = game_state.find_cells_with_quantum_move(other_move)
 				var next_chosen_board_index = -1
 				for i in possible_board_indexes:
-					var possible_cell_info = matrix[i]
+					var possible_cell_info = game_state.matrix[i]
 					print("   check if quantum: ", i)
 					if possible_cell_info.is_quantum():
 						next_chosen_board_index = i
@@ -606,10 +617,10 @@ func collapse_move(chosen_board_index, key, is_top_level):
 		for the_cell in get_tree().get_nodes_in_group("cells"):
 			the_cell.clear_focus()
 			the_cell.unhighlight()
-		print("The move list is ", move_key_list, ", mode: ", TURN_DISPLAY[turn])
-		var classical_board_2 = get_classical_board()
+		print("The move list is ", game_state.move_key_list, ", mode: ", TURN_DISPLAY[game_state.turn])
+		var classical_board_2 = game_state.get_classical_board()
 		var result = check_victory(classical_board_2)
-		if result != 0 or get_empty_tiles(classical_board_2).size() == 0:
+		if result != 0 or get_empty_tiles_for_classical(classical_board_2).size() == 0:
 			end_game(result)
 
 func all_have_value(classical_board, index1, index2, index3):
@@ -621,7 +632,7 @@ func all_have_value(classical_board, index1, index2, index3):
 	if value_1 == value_2 and value_2 == value_3:
 		return value_1
 	return 0
-	
+
 func check_victory(classical_board) -> int:
 	var winner = 0
 	winner = all_have_value(classical_board, 0, 3, 6)
@@ -674,22 +685,15 @@ func check_victory(classical_board) -> int:
 	return winner
 
 func is_game_over(classical_board) -> bool:
-	if get_score(classical_board) != 0 or get_empty_tiles(classical_board).size() == 0:
+	if get_score(classical_board) != 0 or game_state.get_empty_tiles().size() == 0:
 		return true
 	else:
 		return false
 
-func get_empty_tiles(classical_board) -> Array:
-	var _tiles: Array
-	for n in range(0,9):
-		if classical_board[n] == 0:
-			_tiles.append(n)
-	return _tiles
-
 func get_score(classical_board) -> int:
 	var score: int
 	score = check_victory(classical_board)
-	return score * (matrix.size() + 1)
+	return score * (game_state.matrix.size() + 1)
 
 func end_game(value: int) -> void:
 	if value == 1:
@@ -700,82 +704,82 @@ func end_game(value: int) -> void:
 		$WinLabel.text = "It was a tie game"
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
-	turn = TURN_GAME_OVER
+	game_state.turn = TURN_GAME_OVER
 	$PlayAgainButton.visible = true
-	#get_tree().change_scene("res://src/Screens/Main.tscn")
 
 
 #signal functions
 func on_cell_focus(cell: Area2D):
+	#print("on cell focus  turn: ", game_state.turn, "  cell: ", cell.board_index)
 	if cell.board_index == current_cell_focus:
 		return
 
 	current_cell_focus = cell.board_index
 
-	var cell_info = matrix[cell.board_index]
-	if turn == TURN_X_RESOLVE:
+	var cell_info = game_state.matrix[cell.board_index]
+	if game_state.turn == TURN_X_RESOLVE:
 		#print("its resolve mode and the key is ", resolve_key, ".")
 		var count = 0
 		for move in cell_info.moves:
-			if move.key() == resolve_key:
+			if move.key() == game_state.resolve_key:
 				#print("Found cell to focus ", count)
 				cell.set_focus(count, 0)
 			count = count + 1
-	elif turn == TURN_XA or turn == TURN_XB:
+	elif game_state.turn == TURN_XA or game_state.turn == TURN_XB:
 		if cell_info.is_quantum():
 			cell.set_focus(cell_info.number_of_moves(), 1)
-	elif turn == TURN_OA or turn == TURN_OB:
-		if !GameState.vs_computer:
+	elif game_state.turn == TURN_OA or game_state.turn == TURN_OB:
+		if !GameSingleton.vs_computer:
 			if cell_info.is_quantum():
 				cell.set_focus(cell_info.number_of_moves(), -1)
 
-func get_cell_by_index(index: int):
+func get_gui_cell_by_index(index: int):
 	for cell in get_tree().get_nodes_in_group("cells"):
 		if cell.board_index == index:
 			return cell
 	return null
 
 func on_cell_clicked(cell: Area2D):
-	if turn == TURN_X_RESOLVE:
-		if resolve_cells.contains(cell.board_index):
-			collapse_move(cell.board_index, resolve_key, true)
+	if game_state.turn == TURN_X_RESOLVE:
+		if game_state.resolve_cells.contains(cell.board_index):
+			collapse_move(cell.board_index, game_state.resolve_key, true)
 			increment_turn()
 		else:
 			print("The cell ", cell.board_index, " is not a resolve cell")
-			display_nodes(resolve_cells)
+			GameSingleton.display_nodes(game_state.resolve_cells)
 		return
 
-	if turn == TURN_OA or turn == TURN_OB:
-		if !GameState.vs_computer:
+	if game_state.turn == TURN_OA or game_state.turn == TURN_OB:
+		if !GameSingleton.vs_computer:
 			play(cell)
 		return
-	elif turn == TURN_O_RESOLVE:
-		if !GameState.vs_computer:
-			if resolve_cells.contains(cell.board_index):
-				collapse_move(cell.board_index, resolve_key, true)
-				turn = TURN_OA
+	elif game_state.turn == TURN_O_RESOLVE:
+		if !GameSingleton.vs_computer:
+			if game_state.resolve_cells.contains(cell.board_index):
+				collapse_move(cell.board_index, game_state.resolve_key, true)
+				game_state.turn = TURN_OA
 			else:
 				print("The cell ", cell.board_index, " is not a resolve cell")
-				display_nodes(resolve_cells)
+				GameSingleton.display_nodes(game_state.resolve_cells)
 		return
 
 	# regular moves
 	play(cell)
 	
-	if turn == TURN_OA:
+	if game_state.turn == TURN_OA:
 		make_computer_move()
 
 
 func make_computer_move():
-	if turn == TURN_O_RESOLVE:
+	if game_state.turn == TURN_O_RESOLVE:
 		print("Its resolve mode, so the computer has to decide resolution")
 		print("Resolve cells:")
-		display_nodes(resolve_cells)
+		GameSingleton.display_nodes(game_state.resolve_cells)
 		var computer_selected_cell
 		if rng.randi_range(0, 9) > 5:
-			computer_selected_cell = resolve_cells.elements()[0]
+			computer_selected_cell = game_state.resolve_cells.elements()[0]
 		else:
-			computer_selected_cell = resolve_cells.elements()[1]
+			computer_selected_cell = game_state.resolve_cells.elements()[1]
 		print("Computer selected ", computer_selected_cell)
 		computer_move_1 = computer_selected_cell
 		var timer = get_tree().create_timer(4)
@@ -784,9 +788,9 @@ func make_computer_move():
 		make_regular_computer_move()
 
 func make_regular_computer_move():
-	var classical_board = get_classical_board()
-	if GameState.vs_computer and !is_game_over(classical_board):
-		var computer_indexes = real_agent_moves(matrix, turn_number)
+	var classical_board = game_state.get_classical_board()
+	if GameSingleton.vs_computer and !is_game_over(classical_board):
+		var computer_indexes = real_agent_moves(game_state.matrix, game_state.turn_number)
 		print("The computer wants moves ", computer_indexes)
 		# If the length is not two, we have a problem
 		if computer_indexes.size() != 2:
@@ -801,46 +805,25 @@ func make_regular_computer_move():
 			
 func delayed_computer_resolve():
 	print("computer resolve ", OS.get_ticks_msec())
-	collapse_move(computer_move_1, resolve_key, true)
+	collapse_move(computer_move_1, game_state.resolve_key, true)
 	increment_turn()
 	var timer = get_tree().create_timer(3)
 	timer.connect("timeout",self,"make_regular_computer_move")
 
 func delayed_computer_play_1():
 	print("computer move (1) ms ", OS.get_ticks_msec())
-	var computer_cell: Area2D = get_cell_by_index(computer_move_1)
+	var computer_cell: Area2D = get_gui_cell_by_index(computer_move_1)
 	play(computer_cell)
 
 func delayed_computer_play_2():
 	print("computer move (2) ms ", OS.get_ticks_msec())
-	var computer_cell: Area2D = get_cell_by_index(computer_move_2)
+	var computer_cell: Area2D = get_gui_cell_by_index(computer_move_2)
 	play(computer_cell)
-
-func display_nodes(nodes):
-	var count = 0
-	if nodes is Set:
-		for node in nodes.elements():
-			if node is String:
-				print(count, ") ", node)
-			elif node is int:
-				print(count, ") ", str(node))
-			else:
-				print(count, ") ", node.to_display())
-			count = count + 1
-		return
-	for node in nodes:
-		if node is String:
-			print(count, ") ", node)
-		elif node is int:
-			print(count, ") ", str(node))
-		else:
-			print(count, ") ", node.to_display())
-		count = count + 1
 
 # Old Agent methods
 func agent_move(classical_board: Array, player: bool) -> int:
 	var start_time: = OS.get_ticks_msec()
-	var move: int = alpha_beta_search(classical_board, get_empty_tiles(classical_board).size(), -INF, INF, player)[0]
+	var move: int = alpha_beta_search(classical_board, game_state.get_empty_tiles().size(), -INF, INF, player)[0]
 	print_stats(start_time)
 	return move
 
@@ -864,8 +847,8 @@ func alpha_beta_search(classical_board: Array, depth: int, alpha, beta, is_max: 
 	else:
 		best_value = [-1, INF]
 
-	for move in get_empty_tiles(classical_board):
-		var cell: Area2D = get_cell_by_index(move)
+	for move in get_empty_tiles_for_classical(classical_board):
+		var cell: Area2D = get_gui_cell_by_index(move)
 		# TODO This needs to be, make a copy of the board with the given move applied
 		var board_copy = copy_board_with_move(classical_board, move, is_max)
 		var value: Array = [move, alpha_beta_search(board_copy, depth-1, alpha, beta, not is_max)[1]]
@@ -919,21 +902,8 @@ func _on_PlayAgainButton_pressed():
 	set_message_1(msg_initial_1)
 	set_message_2(msg_initial_2)
 
-	quantum_graph = QuantumGraph.new()
-	matrix = []
-	move_key_list = []
-	turn = TURN_XA
-	turn_number = 1
-	resolve_cells = Set.new()
-	for cell in get_tree().get_nodes_in_group("cells"):
-		for qc in cell.quantum_cells:
-			qc.queue_free()
-		cell.quantum_cells = []
-		cell.classical = false
-		cell.initial_hide()		
-		var new_cell = CellInfo.new()
-		new_cell.board_index = matrix.size()
-		matrix.append(new_cell)
+	game_state = GameState.new(1, TURN_XA, [], QuantumGraph.new(), [])
+	game_state.create_empty_board()
 
 #
 # Real computer strategy
@@ -1036,7 +1006,7 @@ func real_agent_moves(matrix, turn_number):
 	#var computer_moves = computer_search(matrix)
 	#print("The computer search moves are ", computer_moves)
 	
-	var available_moves = get_empty_tiles(get_classical_board())
+	var available_moves = game_state.get_empty_tiles()
 	if new_moves.size() < 2:
 		if new_moves.size() == 0:
 			return [available_moves[0], available_moves[1]]
