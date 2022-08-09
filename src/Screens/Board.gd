@@ -237,6 +237,7 @@ class GameState:
 		self.resolve_key = null
 		self.resolve_cells = Set.new()
 		self.resolve_chain = []
+		self.board_indexes_that_will_collapse = Set.new()
 
 	func duplicate():
 		var new_matrix = []
@@ -995,7 +996,16 @@ func _on_PlayAgainButton_pressed():
 
 	game_state = GameState.new(1, TURN_XA, [], QuantumGraph.new(), [])
 	game_state.create_empty_board()
-
+	for the_cell in get_tree().get_nodes_in_group("cells"):
+		the_cell.clear_focus()
+		the_cell.unhighlight()
+		for qc in the_cell.quantum_cells:
+			qc.queue_free()
+		the_cell.quantum_cells = []
+		the_cell.classical = false
+		the_cell.initial_hide()
+	update_gui_after_turn(TURN_XA, TURN_XA, 1)
+	
 #
 # Real computer strategy
 #
