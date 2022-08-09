@@ -13,6 +13,7 @@ var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER
 var message_1 = ""
 var message_2 = ""
 var current_cell_focus = -1
+var win_label = ""
 
 var first_move_sound = preload("res://asset/audio/FirstMove.ogg")
 var second_move_sound = preload("res://asset/audio/SecondMove.ogg")
@@ -56,34 +57,43 @@ const QuantumNode = preload("../QuantumNode.gd")
 const Set = preload("../Set.gd")
 
 var rng = RandomNumberGenerator.new()
-var msg_initial_1 = """
-You are X, and you get to go first.
-Click in one of the nine spaces to make your first quantum move.
+var msg_initial_1 = """You are X, and you get to go first.
 
 Each player makes two quantum moves on each turn. Think of these as multiple potential games being played at once.
 """
-var msg_initial_2 = "Each of your two moves will have a numeric subscript. This is the turn number of those moves."
-var msg_you_made_first_move = """
-Great! Now go ahead and choose a second space for your other quantum move of this turn.
+var msg_initial_2 = "Click in one of the nine spaces to make your first quantum move."
+var msg_you_made_first_move = """Great, you made your first quantum move. 
+
+At this point, neither of your moves is \"real\", or what we call a classical move. Only classical moves can win the game.
+
+Each of your moves will have a numeric subscript. This indicates the turn number of that move.
 """
-var msg_not_real = "At this point, neither of your moves is \"real\", or what we call a classical move. Only classical moves can win the game."
+var msg_you_made_first_move_2 = """Now choose a second space for your other quantum move of this turn.
+"""
+
+var msg_you_made_a_move = """Great, you made your first quantum move of this turn.
+"""
+var msg_you_made_a_move_2 = """Now choose a second space for your other quantum move of this turn.
+"""
+
+var msg_you_resolved_conflict = """Great, you resolved the conflict and there are additional classical moves on the board.
+
+Remember that only classical moves can win the game.
+"""
+var msg_you_resolved_conflict_2 = "Now make your first quantum move of the turn."
+
 var msg_computer_first_move = "The computer made its first quantum move, now for the second ..."
 var msg_computer_second_move = "The computer finished its quantum moves for that round. Now it is your turn again."
 var msg_your_turn = "Go ahead and click in a non-classical space to make your first quantum move of the turn."
-var msg_you_get_to_resolve = """
-The computer chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+var msg_you_get_to_resolve = """The computer chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+
 Some of the earlier possible games are no longer possible, so one resolved space often leads to other spaces being resolved.
 """
-var msg_you_get_to_resolve_2 = """
-You get to choose which of the conflict spots the computer should take. Click on a highlighted space to choose.
+var msg_you_get_to_resolve_2 = """You get to choose which of the conflict spots the computer should take. Click on a highlighted space to choose.
 """
 
-var msg_computer_get_to_resolve = """
-You chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
-
-The computer gets to choose which of the conflict spots you should take.
-"""
-var msg_computer_get_to_resolve_2 = ""
+var msg_computer_get_to_resolve = "You chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves."
+var msg_computer_get_to_resolve_2 = "The computer gets to choose which of the conflict spots you should take."
 
 class Move:
 	var player: int        # 1 = X, -1 = O, 0 = nobody
@@ -227,9 +237,22 @@ class GameState:
 		self.resolve_key = null
 		self.resolve_cells = Set.new()
 		self.resolve_chain = []
-	
+
+	func duplicate():
+		var new_matrix = []
+		for existing_cell_info in matrix:
+			new_matrix.append(existing_cell_info.duplicate())
+		var new_graph = QuantumGraph.new()
+		new_graph.next_id = self.quantum_graph.next_id
+		new_graph.node_list = self.quantum_graph.node_list.duplicate(true)
+		new_graph.forward_dict = self.quantum_graph.forward_dict.duplicate(true)
+		new_graph.backward_dict = self.quantum_graph.backward_dict.duplicate(true)
+		var new_game_state = GameState.new(self.turn_number, self.turn, new_matrix, new_graph, self.move_key_list.duplicate(true))
+		return new_game_state
+
 	func increment_turn_number():
 		turn_number = turn_number + 1
+
 	func create_empty_board():
 		for n in range(0,9):
 			var new_cell = CellInfo.new()
@@ -290,7 +313,6 @@ class GameState:
 
 	func find_all_cells_that_will_collapse(resolve_chain):
 		# I don't think it matters which of the two we use
-		board_indexes_that_will_collapse = Set.new()
 		print("find cells that will collapse ", resolve_key)
 		recurse_find_all_collapse(resolve_key, Set.new(), board_indexes_that_will_collapse)
 		print("found number ", board_indexes_that_will_collapse.size())
@@ -433,6 +455,7 @@ class GameState:
 		return "%16s" % val
 
 	func increment_turn():
+		board_indexes_that_will_collapse = Set.new()
 		var old_turn = turn 
 		if check_for_collapse():
 			if turn == TURN_XA or turn == TURN_XB:
@@ -582,11 +605,11 @@ func update_gui_after_turn(old_turn, new_turn, new_turn_num):
 		$AudioPlayer.play()
 		if new_turn_num == 1:
 			set_message_1(msg_you_made_first_move)
-			set_message_2(msg_not_real)
+			set_message_2(msg_you_made_first_move_2)
 		else:
 			clear_help_image()
-			set_message_2("")
-			set_message_1(msg_you_made_first_move)
+			set_message_1(msg_you_made_a_move)
+			set_message_2(msg_you_made_a_move_2)
 	elif new_turn == TURN_OA:
 		set_message_1("Now it is the computers turn")
 		set_message_2("")
@@ -599,29 +622,39 @@ func update_gui_after_turn(old_turn, new_turn, new_turn_num):
 		set_message_1(msg_computer_first_move)
 		set_message_2("")
 	elif new_turn == TURN_GAME_OVER:
-		set_message_1($WinLabel.text)
+		set_message_1(win_label)
 		set_message_2("The game is over.")
 	# Update the display
 	#$ModeValue.text = TURN_DISPLAY[game_state.turn]
-	$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[new_turn_num]
-	if game_state.is_x_turn():
-		$TurnPlayerInfo/ValueSprite.texture = player_x
-	else:
-		$TurnPlayerInfo/ValueSprite.texture = player_o
-	if game_state.is_first_choice():
-		$LabelFirstMove.visible = true
-		$LabelFirstMove.modulate = Color(1,1,1,1)
-		$LabelSecondMove.visible = false
-		$LabelResolveMove.visible = false
-	elif game_state.is_resolve_mode():
-		$LabelFirstMove.visible = false
-		$LabelSecondMove.visible = false
-		$LabelResolveMove.visible = true		
-	else:
-		$LabelFirstMove.modulate = Color(1,1,1,0.4)
-		$LabelSecondMove.modulate = Color(1,1,1,1)
-		$LabelSecondMove.visible = true
-		$LabelResolveMove.visible = false
+	if new_turn_num < 10:
+		$TurnNumberInfo/ValueSprite.texture = NUMBER_IMAGES[new_turn_num]
+		if game_state.is_x_turn():
+			$TurnPlayerInfo/ValueSprite.texture = player_x
+		else:
+			$TurnPlayerInfo/ValueSprite.texture = player_o
+		if game_state.is_first_choice():
+			$LabelFirstMove.visible = true
+			$LabelFirstMove.modulate = Color(1,1,1,1)
+			$LabelSecondMove.visible = false
+			$LabelResolveMove.visible = false
+		elif game_state.is_resolve_mode():
+			$LabelFirstMove.visible = false
+			$LabelSecondMove.visible = false
+			$LabelResolveMove.visible = true		
+		else:
+			$LabelFirstMove.modulate = Color(1,1,1,0.4)
+			$LabelSecondMove.modulate = Color(1,1,1,1)
+			$LabelSecondMove.visible = true
+			$LabelResolveMove.visible = false
+		
+		for n in game_state.board_indexes_that_will_collapse.elements():
+			var the_cell = get_gui_cell_by_index(n)
+			the_cell.highlight()
+		if game_state.board_indexes_that_will_collapse.is_empty():
+			for the_cell in get_tree().get_nodes_in_group("cells"):
+				the_cell.clear_focus()
+				the_cell.unhighlight()
+		
 	# Set the messages accordingly
 
 	# If this is the only cell left, then make it classical and be done
@@ -641,11 +674,9 @@ func is_move_player(key):
 	elif player_part_of_str == "O":
 		return false
 
-
-
 func collapse_move(chosen_board_index, key):
-	var cell = get_gui_cell_by_index(chosen_board_index)
-	cell.highlight_chosen()
+	#var cell = get_gui_cell_by_index(chosen_board_index)
+	#cell.highlight_chosen()
 	# The resolve_key move exists in both resolve_cells.elements()
 	# but the chosen_board_index was chosen
 	# That means the other one probably goes to another move in the chain node
@@ -660,6 +691,7 @@ func collapse_move(chosen_board_index, key):
 		var collapse_player_val = collapse_move[1]
 		var gui_cell = self.get_gui_cell_by_index(collapse_move[0])
 		gui_cell.make_classical(collapse_player_val == 1)
+		yield(get_tree().create_timer(1.0), "timeout")
 
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
@@ -744,15 +776,18 @@ func get_score(classical_board) -> int:
 
 func end_game(value: int) -> void:
 	if value == 1:
-		$WinLabel.text = "X has won the game!"
+		win_label = "X has won the game!"
 	elif value == -1:
-		$WinLabel.text = "O has won the game!!"
+		win_label = "O has won the game!!"
 	else: # value == 0
-		$WinLabel.text = "It was a tie game"
+		win_label = "It was a tie game"
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
 	game_state.turn = TURN_GAME_OVER
 	$PlayAgainButton.visible = true
+	set_message_1(win_label)
+	set_message_2("The game is over. Click the button above to play again.")
+
 
 
 #signal functions
@@ -793,6 +828,8 @@ func on_cell_clicked(cell: Area2D):
 			game_state.turn = TURN_XA
 			game_state.increment_turn_number()
 			update_gui_after_turn(TURN_X_RESOLVE, TURN_XA, game_state.turn_number)
+			set_message_1(msg_you_resolved_conflict)
+			set_message_2(msg_you_resolved_conflict_2)
 		else:
 			print("The cell ", cell.board_index, " is not a resolve cell")
 			GameSingleton.display_nodes(game_state.resolve_cells)
@@ -857,11 +894,12 @@ func make_regular_computer_move():
 func delayed_computer_resolve():
 	print("computer resolve ", OS.get_ticks_msec())
 	collapse_move(computer_move_1, game_state.resolve_key)
-	game_state.turn = TURN_OA
-	game_state.increment_turn_number()
-	update_gui_after_turn(TURN_O_RESOLVE, TURN_XA, game_state.turn_number)
-	var timer = get_tree().create_timer(3)
-	timer.connect("timeout",self,"make_regular_computer_move")
+	if game_state.turn != TURN_GAME_OVER:
+		game_state.turn = TURN_OA
+		game_state.increment_turn_number()
+		update_gui_after_turn(TURN_O_RESOLVE, TURN_XA, game_state.turn_number)
+		var timer = get_tree().create_timer(3)
+		timer.connect("timeout",self,"make_regular_computer_move")
 
 func delayed_computer_play_1():
 	print("computer move (1) ms ", OS.get_ticks_msec())
@@ -1072,13 +1110,11 @@ func real_agent_moves(matrix, turn_number):
 
 	return new_moves
 
-func copy_matrix_with_moves(matrix, moves, player_val, turn_number):
-	var matrix_copy = copy_matrix(matrix)
-	play_in_matrix(matrix_copy, moves[0], player_val, turn_number)
-	play_in_matrix(matrix_copy, moves[1], player_val, turn_number)
-	# TODO perform any resolutions
-	# Can we encapsulate that logic
-	return matrix_copy
+func copy_state_with_moves(state, moves):
+	var new_state = state.duplicate()
+	new_state.play_move(moves[0])
+	new_state.play_move(moves[1])
+	return new_state
 
 func play_in_matrix(matrix, move_index, player_val, turn_number):
 	var cell_info = matrix_copy[move_index]
@@ -1139,11 +1175,7 @@ func computer_get_utility(classical_board: Array, depth: int) -> int:
 # Many of these are essentially copies of methods from Board.gd
 # We should really encapsulate this better
 #
-func copy_matrix(matrix):
-	var new_matrix = []
-	for existing_cell_info in matrix:
-		new_matrix.append(existing_cell_info.duplicate())
-	return new_matrix
+
 
 func computer_get_classical_board(matrix_copy):
 	var list = []

@@ -7,6 +7,7 @@ var node_list = []
 var forward_dict = Dictionary()
 var backward_dict = Dictionary()	
 
+
 func add_links(new_node):
 	# Setup forward links
 	if forward_dict.has(new_node.end_key):

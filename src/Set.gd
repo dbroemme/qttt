@@ -12,6 +12,9 @@ func add(key):
 	
 func elements():
 	return dict.keys()
-	
+
+func is_empty():
+	return dict.size() == 0
+
 func size():
 	return dict.size()

@@ -11,7 +11,7 @@
 [ext_resource path="res://asset/KenneyFuture.ttf" type="DynamicFontData" id=9]
 
 [sub_resource type="DynamicFont" id=2]
-size = 32
+size = 22
 font_data = ExtResource( 9 )
 
 [sub_resource type="DynamicFont" id=1]
@@ -46,12 +46,34 @@ __meta__ = {
 
 [node name="AppNameLabel" type="RichTextLabel" parent="."]
 margin_left = -221.0
-margin_top = -77.0
+margin_top = -62.0
 margin_right = 205.0
-margin_bottom = 3.0
+margin_bottom = 18.0
 custom_fonts/normal_font = SubResource( 2 )
 text = "Quantum
 Tic  Tac Toe"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="WhatIsNextLabel" type="RichTextLabel" parent="."]
+margin_left = -138.0
+margin_top = 395.0
+margin_right = 44.0
+margin_bottom = 423.0
+custom_fonts/normal_font = SubResource( 2 )
+text = "What now?"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="WhatJustHappenedLabel" type="RichTextLabel" parent="."]
+margin_left = -158.0
+margin_top = 48.0
+margin_right = 66.0
+margin_bottom = 76.0
+custom_fonts/normal_font = SubResource( 2 )
+text = "game updates"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -254,14 +276,14 @@ __meta__ = {
 }
 
 [node name="HelpImage1" type="Sprite" parent="."]
-position = Vector2( -49, 296 )
+position = Vector2( -59, 360 )
 texture = ExtResource( 2 )
 
 [node name="MessagesLabel1" type="RichTextLabel" parent="."]
 margin_left = -184.0
-margin_top = 41.0
+margin_top = 80.0
 margin_right = 120.0
-margin_bottom = 254.0
+margin_bottom = 318.0
 custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
 custom_fonts/normal_font = SubResource( 3 )
 bbcode_enabled = true
@@ -271,9 +293,9 @@ __meta__ = {
 
 [node name="MessagesLabel2" type="RichTextLabel" parent="."]
 margin_left = -184.0
-margin_top = 348.0
+margin_top = 431.0
 margin_right = 120.0
-margin_bottom = 524.0
+margin_bottom = 562.0
 custom_colors/default_color = Color( 0.513726, 0.827451, 0.952941, 1 )
 custom_fonts/normal_font = SubResource( 4 )
 bbcode_enabled = true
