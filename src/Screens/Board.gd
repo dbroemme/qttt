@@ -290,11 +290,58 @@ class GameState:
 				_tiles.append(n)
 		return _tiles
 
+	func all_have_value(classical_board, index1, index2, index3):
+		var value_1 = classical_board[index1]
+		var value_2 = classical_board[index2]
+		var value_3 = classical_board[index3]
+		if value_1 == 0 or value_2 == 0 or value_3 == 0:
+			return 0
+		if value_1 == value_2 and value_2 == value_3:
+			return value_1
+		return 0
+	
 	func get_classical_board():
 		var list = []
 		for cell_info in matrix:
 			list.append(cell_info.get_value())
 		return list
+
+	func is_game_over() -> bool:
+		if get_score() != 0 or get_empty_tiles().size() == 0:
+			return true
+		else:
+			return false
+
+	func get_score() -> int:
+		var score: int
+		score = check_victory()
+		return score * (matrix.size() + 1)
+
+	func check_victory() -> int:
+		var classical_board = get_classical_board()
+		var winner = 0
+		winner = all_have_value(classical_board, 0, 3, 6)
+		if winner != 0:
+			return winner
+		winner = all_have_value(classical_board, 1, 4, 7)		
+		if winner != 0:
+			return winner
+		winner = all_have_value(classical_board, 2, 5, 8)
+		if winner != 0:
+			return winner
+		winner = all_have_value(classical_board, 0, 1, 2)
+		if winner != 0:
+			return winner
+		winner = all_have_value(classical_board, 3, 4, 5)		
+		if winner != 0:
+			return winner
+		winner = all_have_value(classical_board, 6, 7, 8)
+		if winner != 0:
+			return winner
+		winner = all_have_value(classical_board, 0, 4, 8)
+		if winner != 0:
+			return winner
+		return all_have_value(classical_board, 2, 4, 6)
 
 	func derive_resolve_cells(key):
 		# Get the two tiles where this move exists
@@ -314,9 +361,9 @@ class GameState:
 
 	func find_all_cells_that_will_collapse(resolve_chain):
 		# I don't think it matters which of the two we use
-		print("find cells that will collapse ", resolve_key)
+		#print("find cells that will collapse ", resolve_key)
 		recurse_find_all_collapse(resolve_key, Set.new(), board_indexes_that_will_collapse)
-		print("found number ", board_indexes_that_will_collapse.size())
+		#print("found number ", board_indexes_that_will_collapse.size())
 
 	func recurse_find_all_collapse(key, key_set, board_indexes):
 		# Return a list of board indexes that will collapse
@@ -344,17 +391,17 @@ class GameState:
 			var move_key = move_key_list[-x-1]
 			var traverse = quantum_graph.is_cycle(move_key)
 			if traverse.is_cycle:
-				print(move_key, " caused a cycle. Need to resolve")
+				#print(move_key, " caused a cycle. Need to resolve")
 				#$TextLabel.text = quantum_graph.to_display()
 				resolve_chain = traverse.list
-				print("The resolve chain is ", resolve_chain.size(), " items")
+				#print("The resolve chain is ", resolve_chain.size(), " items")
 				GameSingleton.display_nodes(resolve_chain)
 				prepare_for_collapse_move(move_key)
 				find_all_cells_that_will_collapse(resolve_chain)
 				return true
 			else:
 				cycle_display = cycle_display + move_key + ": " + str(traverse.is_cycle) + "\n"
-		print(cycle_display)
+		#print(cycle_display)
 		#$TextLabel.text = game_state.quantum_graph.to_display()
 		#for k in game_state.quantum_graph.forward_dict.keys():
 		#	$TextLabel.text = $TextLabel.text + "\n" + k
@@ -403,12 +450,13 @@ class GameState:
 			quantum_graph.add_links(new_node)
 		#$TextLabel.text = quantum_graph.to_display()
 		print("--- After play ", turn_number, " mode: ", turn, "  key: ", new_move.key(), " history: ", move_key_list)
-		print("Classical board: ", get_classical_board())
+		#print("Classical board: ", get_classical_board())
 		print_matrix()
 		var old_turn = increment_turn()
 		return [true, old_turn, turn, turn_number]
 		
 	func play_resolve(board_index, key, return_moves):
+		print("play resolve")
 		# Update the data structures
 		var cell_info = matrix[board_index]
 		var other_moves = cell_info.make_classical(key)
@@ -425,19 +473,19 @@ class GameState:
 				resolved_node = possible_node
 		if resolved_node != null:
 			resolve_chain.erase(resolved_node)
-			print("Removed chain node: ", resolved_node)
+			#print("Removed chain node: ", resolved_node)
 
 		# Now recursively keep going
-		print("play resolve other moves: ", other_moves.size())
+		#print("play resolve other moves: ", other_moves.size())
 		for other_move in other_moves:
-			print("  consider ", other_move)
+			#print("  consider ", other_move)
 			if move_key_list.has(other_move):
-				print("  do need to recon ", other_move)
+				#print("  do need to recon ", other_move)
 				var possible_board_indexes = find_cells_with_quantum_move(other_move)
 				var next_chosen_board_index = -1
 				for i in possible_board_indexes:
 					var possible_cell_info = matrix[i]
-					print("   check if quantum: ", i)
+					#print("   check if quantum: ", i)
 					if possible_cell_info.is_quantum():
 						next_chosen_board_index = i
 				if next_chosen_board_index == -1:
@@ -567,6 +615,7 @@ func play(cell: Area2D):
 	if !move_made:
 		return
 	
+	print("play screen old_is_x: ", old_is_x, " for ", old_turn_num)
 	var new_quantum_scene = quantum_cell_scene.instance()
 	var new_quantum_sign = new_quantum_scene.get_node("Sign")
 	var new_quantum_label = new_quantum_scene.get_node("OrderLabel")
@@ -681,7 +730,7 @@ func collapse_move(chosen_board_index, key):
 	# The resolve_key move exists in both resolve_cells.elements()
 	# but the chosen_board_index was chosen
 	# That means the other one probably goes to another move in the chain node
-	print("Collapse cell ", chosen_board_index, " for move ", key)
+	#print("Collapse cell ", chosen_board_index, " for move ", key)
 
 	var collapse_moves = []
 	var classical_moves = game_state.play_resolve(chosen_board_index, key, collapse_moves)
@@ -697,9 +746,9 @@ func collapse_move(chosen_board_index, key):
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
 		the_cell.unhighlight()
-	print("The move list is ", game_state.move_key_list, ", mode: ", TURN_DISPLAY[game_state.turn])
+	#print("The move list is ", game_state.move_key_list, ", mode: ", TURN_DISPLAY[game_state.turn])
 	var classical_board = game_state.get_classical_board()
-	var result = check_victory(classical_board)
+	var result = game_state.check_victory()
 	if result != 0 or get_empty_tiles_for_classical(classical_board).size() == 0:
 		end_game(result)
 
@@ -713,73 +762,64 @@ func all_have_value(classical_board, index1, index2, index3):
 		return value_1
 	return 0
 
-func check_victory(classical_board) -> int:
+func highlight_victory(classical_board):
 	var winner = 0
 	winner = all_have_value(classical_board, 0, 3, 6)
 	if winner != 0:
 		$Cell1/WinHighlight.visible = true
 		$Cell4/WinHighlight.visible = true
 		$Cell7/WinHighlight.visible = true
-		return winner
+		return
 	winner = all_have_value(classical_board, 1, 4, 7)		
 	if winner != 0:
 		$Cell2/WinHighlight.visible = true
 		$Cell5/WinHighlight.visible = true
 		$Cell8/WinHighlight.visible = true
-		return winner
+		return
 	winner = all_have_value(classical_board, 2, 5, 8)
 	if winner != 0:
 		$Cell3/WinHighlight.visible = true
 		$Cell6/WinHighlight.visible = true
 		$Cell9/WinHighlight.visible = true
-		return winner
+		return
 	winner = all_have_value(classical_board, 0, 1, 2)
 	if winner != 0:
 		$Cell1/WinHighlight.visible = true
 		$Cell2/WinHighlight.visible = true
 		$Cell3/WinHighlight.visible = true
-		return winner
+		return
 	winner = all_have_value(classical_board, 3, 4, 5)		
 	if winner != 0:
 		$Cell4/WinHighlight.visible = true
 		$Cell5/WinHighlight.visible = true
 		$Cell6/WinHighlight.visible = true
-		return winner
+		return
 	winner = all_have_value(classical_board, 6, 7, 8)
 	if winner != 0:
 		$Cell7/WinHighlight.visible = true
 		$Cell8/WinHighlight.visible = true
 		$Cell9/WinHighlight.visible = true
-		return winner
+		return
 	winner = all_have_value(classical_board, 0, 4, 8)
 	if winner != 0:
 		$Cell1/WinHighlight.visible = true
 		$Cell5/WinHighlight.visible = true
 		$Cell9/WinHighlight.visible = true
-		return winner
+		return
 	winner = all_have_value(classical_board, 2, 4, 6)
 	if winner != 0:
 		$Cell3/WinHighlight.visible = true
 		$Cell5/WinHighlight.visible = true
 		$Cell7/WinHighlight.visible = true
-	return winner
 
-func is_game_over(classical_board) -> bool:
-	if get_score(classical_board) != 0 or game_state.get_empty_tiles().size() == 0:
-		return true
-	else:
-		return false
-
-func get_score(classical_board) -> int:
-	var score: int
-	score = check_victory(classical_board)
-	return score * (game_state.matrix.size() + 1)
 
 func end_game(value: int) -> void:
 	if value == 1:
 		win_label = "X has won the game!"
+		highlight_victory(game_state.get_classical_board())
 	elif value == -1:
 		win_label = "O has won the game!!"
+		highlight_victory(game_state.get_classical_board())
 	else: # value == 0
 		win_label = "It was a tie game"
 	for the_cell in get_tree().get_nodes_in_group("cells"):
@@ -877,9 +917,8 @@ func make_computer_move():
 		make_regular_computer_move()
 
 func make_regular_computer_move():
-	var classical_board = game_state.get_classical_board()
-	if GameSingleton.vs_computer and !is_game_over(classical_board):
-		var computer_indexes = real_agent_moves(game_state.matrix, game_state.turn_number)
+	if GameSingleton.vs_computer and !game_state.is_game_over():
+		var computer_indexes = real_agent_moves(game_state)
 		print("The computer wants moves ", computer_indexes)
 		# If the length is not two, we have a problem
 		if computer_indexes.size() != 2:
@@ -912,13 +951,7 @@ func delayed_computer_play_2():
 	var computer_cell: Area2D = get_gui_cell_by_index(computer_move_2)
 	play(computer_cell)
 
-# Old Agent methods
-func agent_move(classical_board: Array, player: bool) -> int:
-	var start_time: = OS.get_ticks_msec()
-	var move: int = alpha_beta_search(classical_board, game_state.get_empty_tiles().size(), -INF, INF, player)[0]
-	print_stats(start_time)
-	return move
-
+# Agent methods
 func copy_board_with_move(classical_board: Array, move: int, is_player: bool):
 	var copy = classical_board.duplicate(true)
 	var value_to_set = -1
@@ -926,40 +959,6 @@ func copy_board_with_move(classical_board: Array, move: int, is_player: bool):
 		value_to_set = 1
 	copy[move] = value_to_set	
 	return copy
-
-func alpha_beta_search(classical_board: Array, depth: int, alpha, beta, is_max: bool) -> Array:
-	#print("abs ", depth)
-	visited_nodes += 1
-	if is_game_over(classical_board) or depth == 0:
-		var utility: = get_utility(classical_board, depth)
-		return [-1, utility]
-	var best_value: Array
-	if is_max:
-		best_value = [-1, -INF]
-	else:
-		best_value = [-1, INF]
-
-	for move in get_empty_tiles_for_classical(classical_board):
-		var cell: Area2D = get_gui_cell_by_index(move)
-		# TODO This needs to be, make a copy of the board with the given move applied
-		var board_copy = copy_board_with_move(classical_board, move, is_max)
-		var value: Array = [move, alpha_beta_search(board_copy, depth-1, alpha, beta, not is_max)[1]]
-		# Not needed because we are not modifying the actual game board
-		#state.undo_move(cell)
-		if is_max:
-			best_value = max_array(value, best_value, 1)
-			alpha = max(alpha, best_value[1])
-			if alpha >= beta:
-				break # return [move,alpha]
-		else:
-			best_value = min_array(value, best_value, 1)
-			beta = min(beta, best_value[1])
-			if alpha >= beta:
-				break # return [move,beta]
-	return best_value
-
-func get_utility(classical_board: Array, depth: int) -> int:
-	return get_score(classical_board) - depth
 
 func min_array(first: Array, second: Array, pos: int) -> Array:
 	if first[pos] < second[pos]:
@@ -1071,12 +1070,12 @@ func get_remaining_corners(matrix):
 			list.append(corner_index)
 	return list
 
-func real_agent_moves(matrix, turn_number):
+func real_agent_moves(game_state):
 	game_state.print_matrix()
 	var new_moves = []
-	if turn_number == 2:
+	if game_state.turn_number == 2:
 		# On the first move, grab two open corners
-		var open_corners = get_remaining_corners(matrix)
+		var open_corners = get_remaining_corners(game_state.matrix)
 		if open_corners.size() > 2:
 			new_moves.append(open_corners[0])
 			new_moves.append(open_corners[2])
@@ -1085,8 +1084,13 @@ func real_agent_moves(matrix, turn_number):
 			new_moves.append(open_corners[1])
 	else:
 		# Is there somewhere that X can win right away? Defense first
+		# TODO try the search here and see
+		# TODO Need to stack rank the options here
+		#var computer_moves = computer_search(game_state.duplicate())
+		#print("The computer search moves are ", computer_moves)
+
 		for possible_win in ALL_WINS:
-			var check_list = win_check(matrix, 1, possible_win)
+			var check_list = win_check(game_state.matrix, 1, possible_win)
 			if check_list[0] > 1:
 				if check_list[1].size() > 1:
 					print("Gotta block at ", check_list[1][0])
@@ -1108,8 +1112,7 @@ func real_agent_moves(matrix, turn_number):
 	# Don't entangle yourself unless about to win
 	
 	# TODO Prefer at least one empty square
-	#var computer_moves = computer_search(matrix)
-	#print("The computer search moves are ", computer_moves)
+
 	
 	var available_moves = game_state.get_empty_tiles()
 	if new_moves.size() < 2:
@@ -1120,84 +1123,75 @@ func real_agent_moves(matrix, turn_number):
 
 	return new_moves
 
+func computer_search(gstate):
+	var start_time: = OS.get_ticks_msec()
+	# -1 is the computer, so start with that for the search tree
+	#   matrix, depth = 0, min, max, player is computer -1
+	#var moves = computer_alpha_beta_search(game_state, -INF, INF, false)
+	var empty_tiles_array = gstate.get_empty_tiles()
+	var possible_move_permutations = []
+	print("SEARCH: Empty tiles:  ", empty_tiles_array, " game st: ", TURN_DISPLAY[game_state.turn])
+	get_permutations(empty_tiles_array, possible_move_permutations)
+	print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
+	for moves in possible_move_permutations:
+		print("SEARCH: Before copy state: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
+		var copy_state = copy_state_with_moves(gstate, moves)
+		var copy_score = copy_state.get_score()
+		print("SEARCH: Moves ", moves, " is score ", copy_score, " copy turn: ", TURN_DISPLAY[copy_state.turn], " game st: ", TURN_DISPLAY[game_state.turn])
+
+	#print_stats(start_time)
+	return [-2, -2]
+
+func computer_alpha_beta_search(gstate, alpha, beta, is_max) -> Array:
+	# This method returns array [moves_array, utility]
+	visited_nodes += 1
+	var empty_tiles_array = gstate.get_empty_tiles()
+	#print("cabs ", empty_tiles_array.size())
+	if gstate.is_game_over() or empty_tiles_array.size() == 0:
+		var utility: = computer_get_utility(gstate)
+		return [[-1, -1], utility]
+	var best_value: Array
+	if is_max:
+		# The human player is trying to get the highest value
+		best_value = [[-1, -1], -INF]
+	else:
+		# The computer player is trying to get the lowest value
+		best_value = [[-1, -1], INF]
+
+	# TODO what I really want here is each permutation of 2s of the empty tiles
+	var possible_move_permutations = []
+	print("Perms of ", empty_tiles_array)
+	get_permutations(empty_tiles_array, possible_move_permutations)
+	print(possible_move_permutations)
+	for moves in possible_move_permutations:
+		var copy_state = copy_state_with_moves(gstate, moves)
+		var value: Array = [moves, computer_alpha_beta_search(copy_state, alpha, beta, not is_max)[1]]
+		if is_max:
+			best_value = max_array(value, best_value, 1)
+			alpha = max(alpha, best_value[1])
+			if alpha >= beta:
+				break # return [move,alpha]
+		else:
+			best_value = min_array(value, best_value, 1)
+			beta = min(beta, best_value[1])
+			if alpha >= beta:
+				break # return [move,beta]
+	return best_value
+
+func computer_get_utility(gstate) -> int:
+	return gstate.get_score() - gstate.get_empty_tiles().size()
+
 func copy_state_with_moves(state, moves):
 	var new_state = state.duplicate()
 	new_state.play_move(moves[0])
 	new_state.play_move(moves[1])
 	return new_state
-
-func play_in_matrix(matrix, move_index, player_val, turn_number):
-	var cell_info = matrix_copy[move_index]
-	if !cell_info.is_quantum():
-		print("ERROR computer strategy cannot make a move in classical cell ", move_index)
-		return
-	var new_move = computer_create_move_instance(player_val, turn_number)
-	if cell_info.has_move(new_move.key()):
-		print("ERROR computer strategy trying to make a duplicate move in cell ", move_index)		
-		return
-
-func computer_search(matrix):
-	var start_time: = OS.get_ticks_msec()
-	# -1 is the computer, so start with that for the search tree
-	#   matrix, depth = 0, min, max, player is computer -1
-	var moves = computer_alpha_beta_search(matrix, 0, -INF, INF, -1)
-	print_stats(start_time)
-	return moves
-
-func computer_alpha_beta_search(matrix, depth, alpha, beta, player) -> Array:
-	print("cabs ", depth)
-	visited_nodes += 1
-	var classical_board = computer_get_classical_board(matrix_copy)
-	if is_game_over(classical_board) or depth == 0:
-		var utility: = computer_get_utility(classical_board, depth)
-		return [-1, utility]
-	var best_value: Array
-	if player == 1:
-		# The human player is trying to get the highest value
-		best_value = [-1, -INF]
-	else:
-		# The computer player is trying to get the lowest value
-		best_value = [-1, INF]
-
-	#for move in get_empty_tiles(classical_board):
-	#	var cell: Area2D = get_cell_by_index(move)
-		# TODO This needs to be, make a copy of the board with the given move applied
-	#	var board_copy = copy_board_with_move(classical_board, move, is_max)
-	#	var value: Array = [move, alpha_beta_search(board_copy, depth-1, alpha, beta, not is_max)[1]]
-		# Not needed because we are not modifying the actual game board
-		#state.undo_move(cell)
-	#	if is_max:
-	#		best_value = max_array(value, best_value, 1)
-	#		alpha = max(alpha, best_value[1])
-	#		if alpha >= beta:
-	#			break # return [move,alpha]
-	#	else:
-	#		best_value = min_array(value, best_value, 1)
-	#		beta = min(beta, best_value[1])
-	#		if alpha >= beta:
-	#			break # return [move,beta]
-	return best_value
-
-func computer_get_utility(classical_board: Array, depth: int) -> int:
-	return get_score(classical_board) - depth
-
-#
-# Many of these are essentially copies of methods from Board.gd
-# We should really encapsulate this better
-#
-
-
-func computer_get_classical_board(matrix_copy):
-	var list = []
-	for cell_info in matrix_copy:
-		list.append(cell_info.get_value())
-	return list
-
-func computer_create_move_instance(player_val, turn_number):
-	var new_move = Move.new()
-	new_move.player = player_val
-	new_move.order = turn_number
-	new_move.is_classical = false
-	return new_move
-
 	
+func get_permutations(source_array, target_array):
+	if source_array.size() < 2:
+		return
+	for i in range (1, source_array.size()):
+		target_array.append([source_array[0], source_array[i]])
+	source_array.pop_front()
+	print("Size of source array ", source_array.size())
+	get_permutations(source_array, target_array)

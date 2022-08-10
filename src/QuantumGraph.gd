@@ -96,14 +96,16 @@ func remove_key(delete_key):
 		var nodes_to_delete = forward_dict[delete_key]
 		for other_node in nodes_to_delete:
 			var index_to_delete = node_list.find(other_node)
-			node_list.remove(index_to_delete)
+			if index_to_delete > -1:
+				node_list.remove(index_to_delete)
 		forward_dict.erase(delete_key)
 
 	if backward_dict.has(delete_key):
 		var nodes_to_delete = backward_dict[delete_key]
 		for other_node in nodes_to_delete:
 			var index_to_delete = node_list.find(other_node)
-			node_list.remove(index_to_delete)
+			if index_to_delete > -1:
+				node_list.remove(index_to_delete)
 			other_node.clear_children()
 		backward_dict.erase(delete_key)
 
