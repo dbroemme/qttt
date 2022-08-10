@@ -210,8 +210,8 @@ class CellInfo:
 		return new_nodes
 		
 class GameState:
-	var turn_number
-	var turn
+	var turn_number: int 
+	var turn: int 
 	var matrix
 	var quantum_graph
 	var move_key_list
@@ -227,13 +227,9 @@ class GameState:
 	var TURN_X_RESOLVE = 5
 	var TURN_GAME_OVER = 6
 	var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER"]
+	var debug_on = true
 
-	func _init(turn_num, turn_state, matrix_copy, graph, move_list):
-		self.turn_number = turn_num
-		self.turn = turn_state
-		self.matrix = matrix_copy
-		self.quantum_graph = graph
-		self.move_key_list = move_list
+	func _init():
 		self.resolve_key = null
 		self.resolve_cells = Set.new()
 		self.resolve_chain = []
@@ -248,7 +244,12 @@ class GameState:
 		new_graph.node_list = self.quantum_graph.node_list.duplicate(true)
 		new_graph.forward_dict = self.quantum_graph.forward_dict.duplicate(true)
 		new_graph.backward_dict = self.quantum_graph.backward_dict.duplicate(true)
-		var new_game_state = GameState.new(self.turn_number, self.turn, new_matrix, new_graph, self.move_key_list.duplicate(true))
+		var new_game_state = GameState.new()
+		new_game_state.turn_number = self.turn_number
+		new_game_state.turn = self.turn
+		new_game_state.matrix = new_matrix
+		new_game_state.quantum_graph = new_graph
+		new_game_state.move_key_list = self.move_key_list.duplicate(true)
 		return new_game_state
 
 	func increment_turn_number():
@@ -395,7 +396,7 @@ class GameState:
 				#$TextLabel.text = quantum_graph.to_display()
 				resolve_chain = traverse.list
 				#print("The resolve chain is ", resolve_chain.size(), " items")
-				GameSingleton.display_nodes(resolve_chain)
+				#GameSingleton.display_nodes(resolve_chain)
 				prepare_for_collapse_move(move_key)
 				find_all_cells_that_will_collapse(resolve_chain)
 				return true
@@ -449,14 +450,15 @@ class GameState:
 		for new_node in new_nodes:
 			quantum_graph.add_links(new_node)
 		#$TextLabel.text = quantum_graph.to_display()
-		print("--- After play ", turn_number, " mode: ", turn, "  key: ", new_move.key(), " history: ", move_key_list)
+		if debug_on:
+			print("--- After play ", turn_number, " mode: ", TURN_DISPLAY[turn], "     key: ", new_move.key(), " history: ", move_key_list)
 		#print("Classical board: ", get_classical_board())
-		print_matrix()
+		#print_matrix()
 		var old_turn = increment_turn()
 		return [true, old_turn, turn, turn_number]
 		
 	func play_resolve(board_index, key, return_moves):
-		print("play resolve")
+		#print("play resolve")
 		# Update the data structures
 		var cell_info = matrix[board_index]
 		var other_moves = cell_info.make_classical(key)
@@ -565,7 +567,13 @@ func clear_help_image():
 
 # _init() and _ready()
 func _ready():
-	game_state = GameState.new(1, TURN_XA, [], QuantumGraph.new(), [])
+	game_state = GameState.new()
+	game_state.turn_number = 1
+	game_state.turn = TURN_XA
+	game_state.matrix = []
+	game_state.quantum_graph = QuantumGraph.new()
+	game_state.move_key_list = []
+	
 	game_state.create_empty_board()
 
 	$HistoryText.text = ""
@@ -615,7 +623,7 @@ func play(cell: Area2D):
 	if !move_made:
 		return
 	
-	print("play screen old_is_x: ", old_is_x, " for ", old_turn_num)
+	#print("play screen old_is_x: ", old_is_x, " for ", old_turn_num)
 	var new_quantum_scene = quantum_cell_scene.instance()
 	var new_quantum_sign = new_quantum_scene.get_node("Sign")
 	var new_quantum_label = new_quantum_scene.get_node("OrderLabel")
@@ -902,14 +910,14 @@ func on_cell_clicked(cell: Area2D):
 func make_computer_move():
 	if game_state.turn == TURN_O_RESOLVE:
 		print("Its resolve mode, so the computer has to decide resolution")
-		print("Resolve cells:")
-		GameSingleton.display_nodes(game_state.resolve_cells)
+		#print("Resolve cells:")
+		#GameSingleton.display_nodes(game_state.resolve_cells)
 		var computer_selected_cell
 		if rng.randi_range(0, 9) > 5:
 			computer_selected_cell = game_state.resolve_cells.elements()[0]
 		else:
 			computer_selected_cell = game_state.resolve_cells.elements()[1]
-		print("Computer selected ", computer_selected_cell)
+		print("Computer selected resolve node", computer_selected_cell)
 		computer_move_1 = computer_selected_cell
 		var timer = get_tree().create_timer(4)
 		timer.connect("timeout",self,"delayed_computer_resolve")
@@ -942,12 +950,12 @@ func delayed_computer_resolve():
 		timer.connect("timeout",self,"make_regular_computer_move")
 
 func delayed_computer_play_1():
-	print("computer move (1) ms ", OS.get_ticks_msec())
+	#print("computer move (1) ms ", OS.get_ticks_msec())
 	var computer_cell: Area2D = get_gui_cell_by_index(computer_move_1)
 	play(computer_cell)
 
 func delayed_computer_play_2():
-	print("computer move (2) ms ", OS.get_ticks_msec())
+	#print("computer move (2) ms ", OS.get_ticks_msec())
 	var computer_cell: Area2D = get_gui_cell_by_index(computer_move_2)
 	play(computer_cell)
 
@@ -993,7 +1001,12 @@ func _on_PlayAgainButton_pressed():
 	set_message_1(msg_initial_1)
 	set_message_2(msg_initial_2)
 
-	game_state = GameState.new(1, TURN_XA, [], QuantumGraph.new(), [])
+	game_state = GameState.new()
+	game_state.turn_number = 1
+	game_state.turn = TURN_XA
+	game_state.matrix = []
+	game_state.quantum_graph = QuantumGraph.new()
+	game_state.move_key_list = []
 	game_state.create_empty_board()
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
@@ -1088,7 +1101,8 @@ func real_agent_moves(game_state):
 		# TODO Need to stack rank the options here
 		#var computer_moves = computer_search(game_state.duplicate())
 		#print("The computer search moves are ", computer_moves)
-
+		#print("------ end search ------")
+		game_state.print_matrix()
 		for possible_win in ALL_WINS:
 			var check_list = win_check(game_state.matrix, 1, possible_win)
 			if check_list[0] > 1:
@@ -1132,12 +1146,12 @@ func computer_search(gstate):
 	var possible_move_permutations = []
 	print("SEARCH: Empty tiles:  ", empty_tiles_array, " game st: ", TURN_DISPLAY[game_state.turn])
 	get_permutations(empty_tiles_array, possible_move_permutations)
-	print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
+	#print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
 	for moves in possible_move_permutations:
-		print("SEARCH: Before copy state: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
+		#print("SEARCH: Before copy state:  game st: ", TURN_DISPLAY[game_state.turn])
 		var copy_state = copy_state_with_moves(gstate, moves)
 		var copy_score = copy_state.get_score()
-		print("SEARCH: Moves ", moves, " is score ", copy_score, " copy turn: ", TURN_DISPLAY[copy_state.turn], " game st: ", TURN_DISPLAY[game_state.turn])
+		print("SEARCH: Moves ", moves, " (score) => ", copy_score, "    copy turn: ", TURN_DISPLAY[copy_state.turn], " game st: ", TURN_DISPLAY[game_state.turn])
 
 	#print_stats(start_time)
 	return [-2, -2]
@@ -1183,6 +1197,7 @@ func computer_get_utility(gstate) -> int:
 
 func copy_state_with_moves(state, moves):
 	var new_state = state.duplicate()
+	new_state.debug_on = false
 	new_state.play_move(moves[0])
 	new_state.play_move(moves[1])
 	return new_state
@@ -1193,5 +1208,5 @@ func get_permutations(source_array, target_array):
 	for i in range (1, source_array.size()):
 		target_array.append([source_array[0], source_array[i]])
 	source_array.pop_front()
-	print("Size of source array ", source_array.size())
+	#print("Size of source array ", source_array.size())
 	get_permutations(source_array, target_array)
