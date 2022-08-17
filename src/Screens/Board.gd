@@ -1099,9 +1099,9 @@ func real_agent_moves(game_state):
 		# Is there somewhere that X can win right away? Defense first
 		# TODO try the search here and see
 		# TODO Need to stack rank the options here
-		#var computer_moves = computer_search(game_state.duplicate())
-		#print("The computer search moves are ", computer_moves)
-		#print("------ end search ------")
+		var computer_moves = computer_search(game_state.duplicate())
+		print("The computer search moves are ", computer_moves)
+		print("------ end search ------")
 		game_state.print_matrix()
 		for possible_win in ALL_WINS:
 			var check_list = win_check(game_state.matrix, 1, possible_win)
