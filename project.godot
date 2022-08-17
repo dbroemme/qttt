@@ -15,24 +15,12 @@ _global_script_classes=[ {
 "path": "res://src/Screens/Board.gd"
 }, {
 "base": "Node",
-"class": "QuantumGraph",
-"language": "GDScript",
-"path": "res://src/QuantumGraph.gd"
-}, {
-"base": "Node",
-"class": "QuantumNode",
-"language": "GDScript",
-"path": "res://src/QuantumNode.gd"
-}, {
-"base": "Node",
 "class": "Set",
 "language": "GDScript",
 "path": "res://src/Set.gd"
 } ]
 _global_script_class_icons={
 "Model": "",
-"QuantumGraph": "",
-"QuantumNode": "",
 "Set": ""
 }
 

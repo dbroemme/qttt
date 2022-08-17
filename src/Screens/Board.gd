@@ -10,8 +10,6 @@ var TURN_X_RESOLVE = 5
 var TURN_GAME_OVER = 6
 var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER"]
 
-var message_1 = ""
-var message_2 = ""
 var current_cell_focus = -1
 var win_label = ""
 
@@ -52,8 +50,6 @@ onready var help_image_resolve: = preload("res://asset/HelpResolve.png")
 onready var help_image_classical: = preload("res://asset/HelpClassical.png")
 onready var help_image_empty: = preload("res://asset/LittleBlackBox.png")
 
-const QuantumGraph = preload("../QuantumGraph.gd")
-const QuantumNode = preload("../QuantumNode.gd")
 const Set = preload("../Set.gd")
 
 var rng = RandomNumberGenerator.new()
@@ -239,16 +235,12 @@ class GameState:
 		var new_matrix = []
 		for existing_cell_info in matrix:
 			new_matrix.append(existing_cell_info.duplicate())
-		var new_graph = QuantumGraph.new()
-		new_graph.next_id = self.quantum_graph.next_id
-		new_graph.node_list = self.quantum_graph.node_list.duplicate(true)
-		new_graph.forward_dict = self.quantum_graph.forward_dict.duplicate(true)
-		new_graph.backward_dict = self.quantum_graph.backward_dict.duplicate(true)
+		
 		var new_game_state = GameState.new()
 		new_game_state.turn_number = self.turn_number
 		new_game_state.turn = self.turn
 		new_game_state.matrix = new_matrix
-		new_game_state.quantum_graph = new_graph
+		new_game_state.quantum_graph = self.quantum_graph.duplicate()
 		new_game_state.move_key_list = self.move_key_list.duplicate(true)
 		return new_game_state
 
@@ -390,13 +382,20 @@ class GameState:
 		var cycle_display = ""
 		for x in move_key_list.size():
 			var move_key = move_key_list[-x-1]
+			var before_str = quantum_graph.to_display()
 			var traverse = quantum_graph.is_cycle(move_key)
 			if traverse.is_cycle:
-				#print(move_key, " caused a cycle. Need to resolve")
+				print(move_key, " caused a cycle. Need to resolve")
 				#$TextLabel.text = quantum_graph.to_display()
 				resolve_chain = traverse.list
-				#print("The resolve chain is ", resolve_chain.size(), " items")
-				#GameSingleton.display_nodes(resolve_chain)
+				print("The resolve chain is ", resolve_chain.size(), " items")
+				GameSingleton.display_nodes(resolve_chain)
+				print("The before graph is this")
+				print(before_str)
+				print("The after graph is")
+				print(quantum_graph.to_display())
+				print("The matrix is")
+				print_matrix()
 				prepare_for_collapse_move(move_key)
 				find_all_cells_that_will_collapse(resolve_chain)
 				return true
@@ -512,6 +511,9 @@ class GameState:
 			if turn == TURN_XA or turn == TURN_XB:
 				turn = TURN_O_RESOLVE
 			elif turn == TURN_OA or turn == TURN_OB:
+				print("we found an X_RESOLVE")
+				print(quantum_graph.to_display())
+				print("---")
 				turn = TURN_X_RESOLVE
 			else:
 				print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
@@ -533,8 +535,186 @@ class GameState:
 		return old_turn
 # End game state class
 
+
+class QuantumGraph:
+
+	var node_list
+	var forward_dict
+	var backward_dict
+
+	func _init():
+		node_list = []
+		forward_dict = Dictionary()
+		backward_dict = Dictionary()	
+
+	func duplicate():
+		var new_graph = QuantumGraph.new()
+		new_graph.node_list = self.quantum_graph.node_list.duplicate(true)
+		new_graph.forward_dict = Dictionary()
+		var forward_keys = self.quantum_graph.forward_dict.keys()
+		for forward_key in forward_keys:
+			var forward_value = self.quantum_graph.forward_dict[forward_key]
+			new_graph.forward_dict[forward_key] = forward_value.duplicate()
+
+		new_graph.backward_dict = Dictionary()
+		var backward_keys = self.quantum_graph.backward_dict.keys()
+		for backward_key in backward_keys:
+			var backward_value = self.quantum_graph.backward_dict[backward_key]
+			new_graph.backward_dict[backward_key] = backward_value.duplicate()
+
+		return new_graph
+
+	func add_links(new_node):
+		# Setup forward links
+		if forward_dict.has(new_node.end_key):
+			# TODO ignore anyone in your same board index
+			# that includes yourself
+			var other_nodes = forward_dict[new_node.end_key]
+			for other_node in other_nodes:
+				if new_node.board_index != other_node.board_index:
+					new_node.add_link(other_node)
+					#print("(forward) Adding link from ", new_node.end_key, " to ", other_node.begin_key)
+		# Setup backward links
+		if backward_dict.has(new_node.begin_key):
+			# TODO ignore anyone in your same board index
+			# that includes yourself
+			var other_nodes = backward_dict[new_node.begin_key]
+			for other_node in other_nodes:
+				if new_node.board_index != other_node.board_index:
+					other_node.add_link(new_node)
+					#print("(forward) Adding link from ", new_node.end_key, " to ", other_node.begin_key)
+	# We need to be able to lookup multiple record by the begin key,
+	# I guess technically only two (because you are allowed two moves)
+	# because they could be in different board indexes
+
+	func add_nodes(list):
+		for node in list:
+			add_node(node)
+
+	func add_node(new_node):
+		node_list.append(new_node)
+		if forward_dict.has(new_node.begin_key):
+			forward_dict[new_node.begin_key].append(new_node)
+		else:
+			var map_value = []
+			map_value.append(new_node)
+			forward_dict[new_node.begin_key] = map_value
+		# Add to backward dictionary
+		if backward_dict.has(new_node.end_key):
+			backward_dict[new_node.end_key].append(new_node)
+		else:
+			var map_value = []
+			map_value.append(new_node)
+			backward_dict[new_node.end_key] = map_value
+
+	func size():
+		return node_list.size()
+		
+	func to_display():
+		var d = ""
+		for node in node_list:
+			d = d + node.to_display() + "\n"
+		return d
+
+	func is_cycle(key):
+		# A move will be of the form X1.
+		# there should be at least two nodes when you
+		# look for that. Then start from each of thoese
+		# and look for a cycle
+		if !forward_dict.has(key):
+			print("  info: cycle key ", key, " not found in map")
+			return QuantumTraverse.new()
+		var list = forward_dict[key]
+		print("Before we check for cycles, here is the graph:")
+		print(to_display())
+		for node in list:
+			print("  check cycle for ", node.to_display())
+			var traversal_data = QuantumTraverse.new()
+			traversal_data.add_traversed_node(node)
+			is_cycle_for_node(node, traversal_data)
+			if traversal_data.is_cycle:
+				print("  found a cyhcle")
+				return traversal_data
+		return QuantumTraverse.new()
+
+	func is_cycle_for_node(node, traversal_data):
+		for child in node.children:
+			#print("  child: ", child.to_display())
+			traversal_data.is_cycle = traversal_data.have_traversed(child)
+			if traversal_data.is_cycle:
+				#print("    found a cycle with ", child.begin_key)
+				return traversal_data
+			traversal_data.add_traversed_node(child)
+			return is_cycle_for_node(child, traversal_data)
+		return traversal_data
+
+	func remove_key(delete_key):
+		if forward_dict.has(delete_key):
+			var nodes_to_delete = forward_dict[delete_key]
+			for other_node in nodes_to_delete:
+				var index_to_delete = node_list.find(other_node)
+				if index_to_delete > -1:
+					node_list.remove(index_to_delete)
+			forward_dict.erase(delete_key)
+
+		if backward_dict.has(delete_key):
+			var nodes_to_delete = backward_dict[delete_key]
+			for other_node in nodes_to_delete:
+				var index_to_delete = node_list.find(other_node)
+				if index_to_delete > -1:
+					node_list.remove(index_to_delete)
+				other_node.clear_children()
+			backward_dict.erase(delete_key)
+
+class QuantumTraverse:
+	var is_cycle
+	var keys: Array
+	var list: Array
+	func _init():
+		is_cycle = false
+		keys = []
+		list = []
+	func add_traversed_node(node):
+		keys.append(node.begin_key)
+		list.append(node)
+	func have_traversed(node):
+		if keys.has(node.begin_key):
+			return true
+		return false
+		
+
+class QuantumNode:
+
+	var board_index: int
+	var begin_key: String
+	var end_key: String
+	var children = []
+
+	func duplicate():
+		var new_node = QuantumNode.new()
+		new_node.board_index = self.board_index
+		new_node.begin_key = self.begin_key
+		new_node.end_key = self.end_key
+		new_node.children = []
+		for child in children:
+			new_node.children.append(child.duplicate())
+		return new_node
+	func is_link(other_node):
+		return (end_key == begin_key)
+	func add_link(other_node):
+		children.append(other_node)
+	func clear_children():
+		children = []
+	func to_display():
+		var dis_str = "Board " + str(board_index) + ":  " + begin_key + " - " + end_key
+		for child in children:
+			dis_str = dis_str + "  link: " + str(child.board_index)
+		return dis_str
+
+
 export(int) var width: = 3
 export(int) var height: = 3
+
 
 var computer_move_1
 var computer_move_2
@@ -546,14 +726,12 @@ var visited_nodes: = 0
 var game_state
 
 func set_message_1(text_value):
-	message_1 = text_value
 	#$MessagesLabel1.bbcode_text = "[center]" + message_1 + "[center]"	
-	$MessagesLabel1.text = message_1	
+	$MessagesLabel1.text = text_value	
 
 func set_message_2(text_value):
-	message_2 = text_value
 	#$MessagesLabel2.bbcode_text = "[center]" + message_2 + "[center]"	
-	$MessagesLabel2.text = message_2
+	$MessagesLabel2.text = text_value
 	
 func set_message_image(img):
 	$HelpImage1.texture = img
@@ -1102,7 +1280,7 @@ func real_agent_moves(game_state):
 		var computer_moves = computer_search(game_state.duplicate())
 		print("The computer search moves are ", computer_moves)
 		print("------ end search ------")
-		game_state.print_matrix()
+		#game_state.print_matrix()
 		for possible_win in ALL_WINS:
 			var check_list = win_check(game_state.matrix, 1, possible_win)
 			if check_list[0] > 1:
@@ -1152,7 +1330,10 @@ func computer_search(gstate):
 		var copy_state = copy_state_with_moves(gstate, moves)
 		var copy_score = copy_state.get_score()
 		print("SEARCH: Moves ", moves, " (score) => ", copy_score, "    copy turn: ", TURN_DISPLAY[copy_state.turn], " game st: ", TURN_DISPLAY[game_state.turn])
-
+		#if copy_state.turn == TURN_X_RESOLVE:
+		#	copy_state.print_matrix()
+		#if moves == [0,5]:
+		#	print(copy_state.quantum_graph.to_display())
 	#print_stats(start_time)
 	return [-2, -2]
 
