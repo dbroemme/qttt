@@ -385,17 +385,17 @@ class GameState:
 			var before_str = quantum_graph.to_display()
 			var traverse = quantum_graph.is_cycle(move_key)
 			if traverse.is_cycle:
-				print(move_key, " caused a cycle. Need to resolve")
+				#print(move_key, " caused a cycle. Need to resolve")
 				#$TextLabel.text = quantum_graph.to_display()
 				resolve_chain = traverse.list
-				print("The resolve chain is ", resolve_chain.size(), " items")
-				GameSingleton.display_nodes(resolve_chain)
-				print("The before graph is this")
-				print(before_str)
-				print("The after graph is")
-				print(quantum_graph.to_display())
-				print("The matrix is")
-				print_matrix()
+				#print("The resolve chain is ", resolve_chain.size(), " items")
+				#GameSingleton.display_nodes(resolve_chain)
+				#print("The before graph is this")
+				#print(before_str)
+				#print("The after graph is")
+				#print(quantum_graph.to_display())
+				#print("The matrix is")
+				#print_matrix()
 				prepare_for_collapse_move(move_key)
 				find_all_cells_that_will_collapse(resolve_chain)
 				return true
@@ -511,9 +511,9 @@ class GameState:
 			if turn == TURN_XA or turn == TURN_XB:
 				turn = TURN_O_RESOLVE
 			elif turn == TURN_OA or turn == TURN_OB:
-				print("we found an X_RESOLVE")
-				print(quantum_graph.to_display())
-				print("---")
+				#print("we found an X_RESOLVE")
+				#print(quantum_graph.to_display())
+				#print("---")
 				turn = TURN_X_RESOLVE
 			else:
 				print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
@@ -622,18 +622,18 @@ class QuantumGraph:
 		# look for that. Then start from each of thoese
 		# and look for a cycle
 		if !forward_dict.has(key):
-			print("  info: cycle key ", key, " not found in map")
+			#print("  info: cycle key ", key, " not found in map")
 			return QuantumTraverse.new()
 		var list = forward_dict[key]
-		print("Before we check for cycles, here is the graph:")
-		print(to_display())
+		#print("Before we check for cycles, here is the graph:")
+		#print(to_display())
 		for node in list:
-			print("  check cycle for ", node.to_display())
+			#print("  check cycle for ", node.to_display())
 			var traversal_data = QuantumTraverse.new()
 			traversal_data.add_traversed_node(node)
 			is_cycle_for_node(node, traversal_data)
 			if traversal_data.is_cycle:
-				print("  found a cyhcle")
+				#print("  found a cyhcle")
 				return traversal_data
 		return QuantumTraverse.new()
 
