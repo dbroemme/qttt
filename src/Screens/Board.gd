@@ -382,18 +382,13 @@ class GameState:
 		var cycle_display = ""
 		for x in move_key_list.size():
 			var move_key = move_key_list[-x-1]
-			var before_str = quantum_graph.to_display()
-			var traverse = quantum_graph.is_cycle(move_key)
+			var traverse = self.quantum_graph.is_cycle(move_key)
 			if traverse.is_cycle:
-				#print(move_key, " caused a cycle. Need to resolve")
-				#$TextLabel.text = quantum_graph.to_display()
 				resolve_chain = traverse.list
-				#print("The resolve chain is ", resolve_chain.size(), " items")
-				#GameSingleton.display_nodes(resolve_chain)
-				#print("The before graph is this")
-				#print(before_str)
-				#print("The after graph is")
-				#print(quantum_graph.to_display())
+				print("The resolve chain is ", resolve_chain.size(), " items for move key ", move_key)
+				GameSingleton.display_nodes(resolve_chain)
+				print("The graph is")
+				print(quantum_graph.to_display())
 				#print("The matrix is")
 				#print_matrix()
 				prepare_for_collapse_move(move_key)
@@ -549,17 +544,19 @@ class QuantumGraph:
 
 	func duplicate():
 		var new_graph = QuantumGraph.new()
-		new_graph.node_list = self.quantum_graph.node_list.duplicate(true)
+		new_graph.node_list = []
+		for node in self.node_list:
+			new_graph.node_list.append(node.duplicate())
 		new_graph.forward_dict = Dictionary()
-		var forward_keys = self.quantum_graph.forward_dict.keys()
+		var forward_keys = self.forward_dict.keys()
 		for forward_key in forward_keys:
-			var forward_value = self.quantum_graph.forward_dict[forward_key]
+			var forward_value = self.forward_dict[forward_key]
 			new_graph.forward_dict[forward_key] = forward_value.duplicate()
 
 		new_graph.backward_dict = Dictionary()
-		var backward_keys = self.quantum_graph.backward_dict.keys()
+		var backward_keys = self.backward_dict.keys()
 		for backward_key in backward_keys:
-			var backward_value = self.quantum_graph.backward_dict[backward_key]
+			var backward_value = self.backward_dict[backward_key]
 			new_graph.backward_dict[backward_key] = backward_value.duplicate()
 
 		return new_graph
@@ -695,9 +692,9 @@ class QuantumNode:
 		new_node.board_index = self.board_index
 		new_node.begin_key = self.begin_key
 		new_node.end_key = self.end_key
-		new_node.children = []
+		new_node.clear_children()
 		for child in children:
-			new_node.children.append(child.duplicate())
+			new_node.add_link(child.duplicate())
 		return new_node
 	func is_link(other_node):
 		return (end_key == begin_key)
@@ -1326,12 +1323,15 @@ func computer_search(gstate):
 	get_permutations(empty_tiles_array, possible_move_permutations)
 	#print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
 	for moves in possible_move_permutations:
+		print("------ START ", moves, " ------")
 		#print("SEARCH: Before copy state:  game st: ", TURN_DISPLAY[game_state.turn])
 		var copy_state = copy_state_with_moves(gstate, moves)
 		var copy_score = copy_state.get_score()
 		print("SEARCH: Moves ", moves, " (score) => ", copy_score, "    copy turn: ", TURN_DISPLAY[copy_state.turn], " game st: ", TURN_DISPLAY[game_state.turn])
 		#if copy_state.turn == TURN_X_RESOLVE:
-		#	copy_state.print_matrix()
+		copy_state.print_matrix()
+		print(copy_state.quantum_graph.to_display())
+		print("------ END   ", moves, " ------")
 		#if moves == [0,5]:
 		#	print(copy_state.quantum_graph.to_display())
 	#print_stats(start_time)
