@@ -172,6 +172,12 @@ class CellInfo:
 			if move.key() == a_key:
 				return true
 		return false
+	func moves_except(a_key):
+		var other_moves = []
+		for move in moves:
+			if move.key() != a_key:
+				other_moves.append(move)
+		return other_moves
 	func has_quantum_player(player_val):
 		var the_value = get_value()
 		if the_value == 0:
@@ -188,32 +194,15 @@ class CellInfo:
 		new_move.player = player
 		new_move.order = order
 		new_move.is_classical = false
-		var new_nodes = []
-		for existing_move in moves:
-			# First create the forward direction
-			var forward_node = QuantumNode.new()
-			forward_node.board_index = board_index
-			forward_node.begin_key = new_move.key()
-			forward_node.end_key = existing_move.key()
-			new_nodes.append(forward_node)
-			# Then create the backwards direction
-			var backward_node = QuantumNode.new()
-			backward_node.board_index = board_index
-			backward_node.begin_key = existing_move.key()
-			backward_node.end_key = new_move.key()
-			new_nodes.append(backward_node)
 		moves.append(new_move)
-		return new_nodes
 		
 class GameState:
 	var turn_number: int 
 	var turn: int 
 	var matrix
-	var quantum_graph
 	var move_key_list
 	var resolve_key
 	var resolve_cells
-	var resolve_chain
 	var board_indexes_that_will_collapse
 	var TURN_XA = 0
 	var TURN_XB = 1
@@ -227,8 +216,7 @@ class GameState:
 
 	func _init():
 		self.resolve_key = null
-		self.resolve_cells = Set.new()
-		self.resolve_chain = []
+		self.resolve_cells = []
 		self.board_indexes_that_will_collapse = Set.new()
 
 	func duplicate():
@@ -240,7 +228,6 @@ class GameState:
 		new_game_state.turn_number = self.turn_number
 		new_game_state.turn = self.turn
 		new_game_state.matrix = new_matrix
-		new_game_state.quantum_graph = self.quantum_graph.duplicate()
 		new_game_state.move_key_list = self.move_key_list.duplicate(true)
 		return new_game_state
 
@@ -336,14 +323,6 @@ class GameState:
 			return winner
 		return all_have_value(classical_board, 2, 4, 6)
 
-	func derive_resolve_cells(key):
-		# Get the two tiles where this move exists
-		var nodes_with_key = quantum_graph.forward_dict[key]
-		var cell_set = Set.new()
-		for node_with_key in nodes_with_key:
-			cell_set.add(node_with_key.board_index)
-		return cell_set
-
 	func find_cells_with_quantum_move(key):
 		var result = []
 		for index in matrix.size():
@@ -352,7 +331,7 @@ class GameState:
 				result.append(index)
 		return result
 
-	func find_all_cells_that_will_collapse(resolve_chain):
+	func find_all_cells_that_will_collapse():
 		# I don't think it matters which of the two we use
 		#print("find cells that will collapse ", resolve_key)
 		recurse_find_all_collapse(resolve_key, Set.new(), board_indexes_that_will_collapse)
@@ -379,32 +358,60 @@ class GameState:
 		return cell_info_with_key
 
 	func check_for_collapse() -> bool:
-		var cycle_display = ""
-		for x in move_key_list.size():
-			var move_key = move_key_list[-x-1]
-			var traverse = self.quantum_graph.is_cycle(move_key)
-			if traverse.is_cycle:
-				resolve_chain = traverse.list
-				print("The resolve chain is ", resolve_chain.size(), " items for move key ", move_key)
-				GameSingleton.display_nodes(resolve_chain)
-				print("The graph is")
-				print(quantum_graph.to_display())
-				#print("The matrix is")
-				#print_matrix()
-				prepare_for_collapse_move(move_key)
-				find_all_cells_that_will_collapse(resolve_chain)
+		for move_key in move_key_list:
+			var two_board_indices = get_cells_with_move(move_key)
+			print(move_key, " was found in two board indices ", two_board_indices)
+			var cell_1 = matrix[two_board_indices[0]]
+			var cell_2 = matrix[two_board_indices[1]]
+			# Resolve cells are the two board indexes where this move exists
+			# Resolve chain are all the cells that formed the cycle
+			# Not exactly sure why we need it though
+			var traversed_set_1 = Set.new()
+			traversed_set_1.add(str(cell_1.board_index) + move_key)
+			if recurse_check_for_collapse(move_key, cell_1.board_index, traversed_set_1):
+				resolve_key = move_key_list.back()
+				print("The resolve key is ", resolve_key)
+				resolve_cells = get_cells_with_move(move_key)
+				find_all_cells_that_will_collapse()
 				return true
 			else:
-				cycle_display = cycle_display + move_key + ": " + str(traverse.is_cycle) + "\n"
-		#print(cycle_display)
-		#$TextLabel.text = game_state.quantum_graph.to_display()
-		#for k in game_state.quantum_graph.forward_dict.keys():
-		#	$TextLabel.text = $TextLabel.text + "\n" + k
+				var traversed_set_2 = Set.new()
+				traversed_set_2.add(str(cell_2.board_index) + move_key)
+				if recurse_check_for_collapse(move_key, cell_2.board_index, traversed_set_2):
+					resolve_key = move_key_list.back()
+					print("The resolve key is ", resolve_key)
+					resolve_cells = get_cells_with_move(move_key)
+					find_all_cells_that_will_collapse()
+					return true
+		return false
+	
+	func recurse_check_for_collapse(move_key, last_spot, traversed_set):
+		print("Recurse check ", move_key, " set: ", traversed_set)
+		var two_board_indices = get_cells_with_move(move_key)
+		var cell_to_process = two_board_indices[0]
+		if cell_to_process == last_spot:
+			cell_to_process = two_board_indices[1]
+
+		var the_cell_info = matrix[cell_to_process]
+		var other_moves = the_cell_info.moves_except(move_key)
+		for other_move in other_moves:
+			var new_traverse_key = str(the_cell_info.board_index) + other_move.key()
+			if traversed_set.contains(new_traverse_key):
+				print("  ", new_traverse_key, " was in the traversed set ", traversed_set)
+				return true
+			else:
+				traversed_set.add(new_traverse_key)
+				if recurse_check_for_collapse(other_move.key(), cell_to_process, traversed_set):
+					return true
+				
 		return false
 
-	func prepare_for_collapse_move(move_key):
-		resolve_key = move_key
-		resolve_cells = derive_resolve_cells(resolve_key)
+	func get_cells_with_move(move_key):
+		var list = []
+		for cell_info in matrix:
+			if cell_info.is_quantum() and cell_info.has_move(move_key):
+				list.append(cell_info.board_index)
+		return list
 
 	func player_value():
 		if turn < TURN_OA:
@@ -439,15 +446,10 @@ class GameState:
 		if is_first_choice():
 			move_key_list.append(new_move.key())
 
-		var new_nodes = cell_info.add_move(turn_number, player_value())
-		quantum_graph.add_nodes(new_nodes)
-		for new_node in new_nodes:
-			quantum_graph.add_links(new_node)
-		#$TextLabel.text = quantum_graph.to_display()
+		cell_info.add_move(turn_number, player_value())
 		if debug_on:
 			print("--- After play ", turn_number, " mode: ", TURN_DISPLAY[turn], "     key: ", new_move.key(), " history: ", move_key_list)
-		#print("Classical board: ", get_classical_board())
-		#print_matrix()
+
 		var old_turn = increment_turn()
 		return [true, old_turn, turn, turn_number]
 		
@@ -458,18 +460,8 @@ class GameState:
 		var other_moves = cell_info.make_classical(key)
 		return_moves.append([cell_info.board_index, cell_info.get_value()])
 
-		quantum_graph.remove_key(key)
 		var index_to_delete = move_key_list.find(key)
 		move_key_list.remove(index_to_delete)
-
-		var resolved_node = null
-		for possible_index in range(0, resolve_chain.size()):
-			var possible_node = resolve_chain[possible_index]
-			if possible_node.begin_key == key:
-				resolved_node = possible_node
-		if resolved_node != null:
-			resolve_chain.erase(resolved_node)
-			#print("Removed chain node: ", resolved_node)
 
 		# Now recursively keep going
 		#print("play resolve other moves: ", other_moves.size())
@@ -502,13 +494,10 @@ class GameState:
 	func increment_turn():
 		board_indexes_that_will_collapse = Set.new()
 		var old_turn = turn 
-		if check_for_collapse():
+		if !is_first_choice() and check_for_collapse():
 			if turn == TURN_XA or turn == TURN_XB:
 				turn = TURN_O_RESOLVE
 			elif turn == TURN_OA or turn == TURN_OB:
-				#print("we found an X_RESOLVE")
-				#print(quantum_graph.to_display())
-				#print("---")
 				turn = TURN_X_RESOLVE
 			else:
 				print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
@@ -529,184 +518,6 @@ class GameState:
 				print("ERROR do not know how to increment turn ", TURN_DISPLAY[turn])
 		return old_turn
 # End game state class
-
-
-class QuantumGraph:
-
-	var node_list
-	var forward_dict
-	var backward_dict
-
-	func _init():
-		node_list = []
-		forward_dict = Dictionary()
-		backward_dict = Dictionary()	
-
-	func duplicate():
-		var new_graph = QuantumGraph.new()
-		new_graph.node_list = []
-		for node in self.node_list:
-			new_graph.node_list.append(node.duplicate())
-		new_graph.forward_dict = Dictionary()
-		var forward_keys = self.forward_dict.keys()
-		for forward_key in forward_keys:
-			var forward_value = self.forward_dict[forward_key]
-			new_graph.forward_dict[forward_key] = forward_value.duplicate()
-
-		new_graph.backward_dict = Dictionary()
-		var backward_keys = self.backward_dict.keys()
-		for backward_key in backward_keys:
-			var backward_value = self.backward_dict[backward_key]
-			new_graph.backward_dict[backward_key] = backward_value.duplicate()
-
-		return new_graph
-
-	func add_links(new_node):
-		# Setup forward links
-		if forward_dict.has(new_node.end_key):
-			# TODO ignore anyone in your same board index
-			# that includes yourself
-			var other_nodes = forward_dict[new_node.end_key]
-			for other_node in other_nodes:
-				if new_node.board_index != other_node.board_index:
-					new_node.add_link(other_node)
-					#print("(forward) Adding link from ", new_node.end_key, " to ", other_node.begin_key)
-		# Setup backward links
-		if backward_dict.has(new_node.begin_key):
-			# TODO ignore anyone in your same board index
-			# that includes yourself
-			var other_nodes = backward_dict[new_node.begin_key]
-			for other_node in other_nodes:
-				if new_node.board_index != other_node.board_index:
-					other_node.add_link(new_node)
-					#print("(forward) Adding link from ", new_node.end_key, " to ", other_node.begin_key)
-	# We need to be able to lookup multiple record by the begin key,
-	# I guess technically only two (because you are allowed two moves)
-	# because they could be in different board indexes
-
-	func add_nodes(list):
-		for node in list:
-			add_node(node)
-
-	func add_node(new_node):
-		node_list.append(new_node)
-		if forward_dict.has(new_node.begin_key):
-			forward_dict[new_node.begin_key].append(new_node)
-		else:
-			var map_value = []
-			map_value.append(new_node)
-			forward_dict[new_node.begin_key] = map_value
-		# Add to backward dictionary
-		if backward_dict.has(new_node.end_key):
-			backward_dict[new_node.end_key].append(new_node)
-		else:
-			var map_value = []
-			map_value.append(new_node)
-			backward_dict[new_node.end_key] = map_value
-
-	func size():
-		return node_list.size()
-		
-	func to_display():
-		var d = ""
-		for node in node_list:
-			d = d + node.to_display() + "\n"
-		return d
-
-	func is_cycle(key):
-		# A move will be of the form X1.
-		# there should be at least two nodes when you
-		# look for that. Then start from each of thoese
-		# and look for a cycle
-		if !forward_dict.has(key):
-			#print("  info: cycle key ", key, " not found in map")
-			return QuantumTraverse.new()
-		var list = forward_dict[key]
-		#print("Before we check for cycles, here is the graph:")
-		#print(to_display())
-		for node in list:
-			#print("  check cycle for ", node.to_display())
-			var traversal_data = QuantumTraverse.new()
-			traversal_data.add_traversed_node(node)
-			is_cycle_for_node(node, traversal_data)
-			if traversal_data.is_cycle:
-				#print("  found a cyhcle")
-				return traversal_data
-		return QuantumTraverse.new()
-
-	func is_cycle_for_node(node, traversal_data):
-		for child in node.children:
-			#print("  child: ", child.to_display())
-			traversal_data.is_cycle = traversal_data.have_traversed(child)
-			if traversal_data.is_cycle:
-				#print("    found a cycle with ", child.begin_key)
-				return traversal_data
-			traversal_data.add_traversed_node(child)
-			return is_cycle_for_node(child, traversal_data)
-		return traversal_data
-
-	func remove_key(delete_key):
-		if forward_dict.has(delete_key):
-			var nodes_to_delete = forward_dict[delete_key]
-			for other_node in nodes_to_delete:
-				var index_to_delete = node_list.find(other_node)
-				if index_to_delete > -1:
-					node_list.remove(index_to_delete)
-			forward_dict.erase(delete_key)
-
-		if backward_dict.has(delete_key):
-			var nodes_to_delete = backward_dict[delete_key]
-			for other_node in nodes_to_delete:
-				var index_to_delete = node_list.find(other_node)
-				if index_to_delete > -1:
-					node_list.remove(index_to_delete)
-				other_node.clear_children()
-			backward_dict.erase(delete_key)
-
-class QuantumTraverse:
-	var is_cycle
-	var keys: Array
-	var list: Array
-	func _init():
-		is_cycle = false
-		keys = []
-		list = []
-	func add_traversed_node(node):
-		keys.append(node.begin_key)
-		list.append(node)
-	func have_traversed(node):
-		if keys.has(node.begin_key):
-			return true
-		return false
-		
-
-class QuantumNode:
-
-	var board_index: int
-	var begin_key: String
-	var end_key: String
-	var children = []
-
-	func duplicate():
-		var new_node = QuantumNode.new()
-		new_node.board_index = self.board_index
-		new_node.begin_key = self.begin_key
-		new_node.end_key = self.end_key
-		new_node.clear_children()
-		for child in children:
-			new_node.add_link(child.duplicate())
-		return new_node
-	func is_link(other_node):
-		return (end_key == begin_key)
-	func add_link(other_node):
-		children.append(other_node)
-	func clear_children():
-		children = []
-	func to_display():
-		var dis_str = "Board " + str(board_index) + ":  " + begin_key + " - " + end_key
-		for child in children:
-			dis_str = dis_str + "  link: " + str(child.board_index)
-		return dis_str
 
 
 export(int) var width: = 3
@@ -746,7 +557,6 @@ func _ready():
 	game_state.turn_number = 1
 	game_state.turn = TURN_XA
 	game_state.matrix = []
-	game_state.quantum_graph = QuantumGraph.new()
 	game_state.move_key_list = []
 	
 	game_state.create_empty_board()
@@ -1047,7 +857,7 @@ func get_gui_cell_by_index(index: int):
 
 func on_cell_clicked(cell: Area2D):
 	if game_state.turn == TURN_X_RESOLVE:
-		if game_state.resolve_cells.contains(cell.board_index):
+		if game_state.resolve_cells.has(cell.board_index):
 			collapse_move(cell.board_index, game_state.resolve_key)
 			game_state.turn = TURN_XA
 			game_state.increment_turn_number()
@@ -1065,7 +875,7 @@ func on_cell_clicked(cell: Area2D):
 		return
 	elif game_state.turn == TURN_O_RESOLVE:
 		if !GameSingleton.vs_computer:
-			if game_state.resolve_cells.contains(cell.board_index):
+			if game_state.resolve_cells.has(cell.board_index):
 				collapse_move(cell.board_index, game_state.resolve_key)
 				game_state.turn = TURN_OA
 				game_state.increment_turn_number()
@@ -1089,9 +899,9 @@ func make_computer_move():
 		#GameSingleton.display_nodes(game_state.resolve_cells)
 		var computer_selected_cell
 		if rng.randi_range(0, 9) > 5:
-			computer_selected_cell = game_state.resolve_cells.elements()[0]
+			computer_selected_cell = game_state.resolve_cells[0]
 		else:
-			computer_selected_cell = game_state.resolve_cells.elements()[1]
+			computer_selected_cell = game_state.resolve_cells[1]
 		print("Computer selected resolve node", computer_selected_cell)
 		computer_move_1 = computer_selected_cell
 		var timer = get_tree().create_timer(4)
@@ -1180,7 +990,6 @@ func _on_PlayAgainButton_pressed():
 	game_state.turn_number = 1
 	game_state.turn = TURN_XA
 	game_state.matrix = []
-	game_state.quantum_graph = QuantumGraph.new()
 	game_state.move_key_list = []
 	game_state.create_empty_board()
 	for the_cell in get_tree().get_nodes_in_group("cells"):
@@ -1196,7 +1005,6 @@ func _on_PlayAgainButton_pressed():
 #
 # Real computer strategy
 #
-var matrix_copy
 var CORNER_CELLS = [0, 2, 6, 8]
 var MIDDLE_CELL = 4
 var WIN_L_V = [0, 3, 6]
@@ -1330,10 +1138,7 @@ func computer_search(gstate):
 		print("SEARCH: Moves ", moves, " (score) => ", copy_score, "    copy turn: ", TURN_DISPLAY[copy_state.turn], " game st: ", TURN_DISPLAY[game_state.turn])
 		#if copy_state.turn == TURN_X_RESOLVE:
 		copy_state.print_matrix()
-		print(copy_state.quantum_graph.to_display())
 		print("------ END   ", moves, " ------")
-		#if moves == [0,5]:
-		#	print(copy_state.quantum_graph.to_display())
 	#print_stats(start_time)
 	return [-2, -2]
 

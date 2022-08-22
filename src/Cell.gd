@@ -125,7 +125,7 @@ func _on_mouse_exited():
 	if not classical:
 		#Input.set_default_cursor_shape(0)
 		if get_parent().game_state.is_resolve_mode():
-			if get_parent().game_state.resolve_cells.contains(board_index):
+			if get_parent().game_state.resolve_cells.has(board_index):
 				# TODO we just want to clear the focus on the one quantum cell
 				# The rest we want to stay blurred out
 				clear_focus()
