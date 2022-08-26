@@ -57,12 +57,18 @@ var msg_initial_1 = """You are X, and you get to go first.
 
 Each player makes two quantum moves on each turn. Think of these as multiple potential games being played at once.
 """
+var human_msg_initial_1 = """The first player is X.
+
+Each player makes two quantum moves on each turn. Think of these as multiple potential games being played at once.
+"""
+
+
 var msg_initial_2 = "Click in one of the nine spaces to make your first quantum move."
 var msg_you_made_first_move = """Great, you made your first quantum move. 
 
-At this point, neither of your moves is \"real\", or what we call a classical move. Only classical moves can win the game.
+At this point, your quantum move is not \"real\", or what we call a classical move. Only classical moves can win the game.
 
-Each of your moves will have a numeric subscript. This indicates the turn number of that move.
+Each quantum move has a numeric subscript that indicates the turn number.
 """
 var msg_you_made_first_move_2 = """Now choose a second space for your other quantum move of this turn.
 """
@@ -70,6 +76,9 @@ var msg_you_made_first_move_2 = """Now choose a second space for your other quan
 var msg_you_made_a_move = """Great, you made your first quantum move of this turn.
 """
 var msg_you_made_a_move_2 = """Now choose a second space for your other quantum move of this turn.
+"""
+
+var msg_human_made_a_move = """Great, player O made the first quantum move of this turn.
 """
 
 var msg_you_resolved_conflict = """Great, you resolved the conflict and there are additional classical moves on the board.
@@ -80,6 +89,12 @@ var msg_you_resolved_conflict_2 = "Now make your first quantum move of the turn.
 
 var msg_computer_first_move = "The computer made its first quantum move, now for the second ..."
 var msg_computer_second_move = "The computer finished its quantum moves for that round. Now it is your turn again."
+
+var msg_human_first_move = "Player O made its first quantum move, now for the second ..."
+var msg_human_second_move = "Player O finished its quantum moves for that round. Now it is player X again."
+var msg_human_turn = "Player X, its your turn. Go ahead and click in a non-classical space for your next quantum move."
+
+
 var msg_your_turn = "Go ahead and click in a non-classical space to make your first quantum move of the turn."
 var msg_you_get_to_resolve = """The computer chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
 
@@ -88,8 +103,18 @@ Some of the earlier possible games are no longer possible, so one resolved space
 var msg_you_get_to_resolve_2 = """You get to choose which of the conflict spots the computer should take. Click on a highlighted space to choose.
 """
 
+var msg_you_get_to_resolve_human = """Player O chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+
+Some of the earlier possible games are no longer possible, so one resolved space often leads to other spaces being resolved.
+"""
+var msg_you_get_to_resolve_2_human = """Player X gets to choose which of the conflict spots Player O should take. Click on a highlighted space to choose.
+"""
+
 var msg_computer_get_to_resolve = "You chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves."
 var msg_computer_get_to_resolve_2 = "The computer gets to choose which of the conflict spots you should take."
+
+var msg_human_get_to_resolve = "Player X chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves."
+var msg_human_get_to_resolve_2 = "Player O gets to choose which of the conflict spots Player X should take."
 
 class Move:
 	var player: int        # 1 = X, -1 = O, 0 = nobody
@@ -576,7 +601,10 @@ func _ready():
 	$TurnPlayerInfo/ValueSprite.texture = player_x
 	$LabelFirstMove.visible = true
 	$LabelSecondMove.modulate = Color(1,1,1,0.5)
-	set_message_1(msg_initial_1)
+	if GameSingleton.vs_computer:
+		set_message_1(msg_initial_1)
+	else:
+		set_message_1(human_msg_initial_1)
 	set_message_2(msg_initial_2)
 	
 	for cell in get_tree().get_nodes_in_group("cells"):
@@ -630,19 +658,32 @@ func play(cell: Area2D):
 func update_gui_after_turn(old_turn, new_turn, new_turn_num):
 	if new_turn == TURN_O_RESOLVE:
 		resolve_effects()
-		set_message_1(msg_computer_get_to_resolve)
-		set_message_2(msg_computer_get_to_resolve_2)
+		if GameSingleton.vs_computer:
+			set_message_1(msg_computer_get_to_resolve)
+			set_message_2(msg_computer_get_to_resolve_2)
+		else:
+			set_message_1(msg_human_get_to_resolve)
+			set_message_2(msg_human_get_to_resolve_2)			
 		if GameSingleton.vs_computer:
 			make_computer_move()
 	elif new_turn == TURN_X_RESOLVE:
 		resolve_effects()
-		set_message_1(msg_you_get_to_resolve)
-		set_message_2(msg_you_get_to_resolve_2)
+		if GameSingleton.vs_computer:
+			set_message_1(msg_you_get_to_resolve)
+			set_message_2(msg_you_get_to_resolve_2)
+		else:
+			set_message_1(msg_you_get_to_resolve_human)
+			set_message_2(msg_you_get_to_resolve_2_human)
 	elif new_turn == TURN_XA:
 		$AudioPlayer.stream = computer_second_move_sound
 		$AudioPlayer.play()
-		set_message_1(msg_computer_second_move)
-		set_message_2(msg_your_turn)
+		if GameSingleton.vs_computer:
+			set_message_1(msg_computer_second_move)
+			set_message_2(msg_your_turn)
+		else:
+			set_message_1(msg_human_second_move)
+			set_message_2(msg_human_turn)
+			
 	elif new_turn == TURN_XB:
 		$AudioPlayer.stream = first_move_sound
 		$AudioPlayer.play()
@@ -654,16 +695,25 @@ func update_gui_after_turn(old_turn, new_turn, new_turn_num):
 			set_message_1(msg_you_made_a_move)
 			set_message_2(msg_you_made_a_move_2)
 	elif new_turn == TURN_OA:
-		set_message_1("Now it is the computers turn")
-		set_message_2("")
+		if GameSingleton.vs_computer:
+			set_message_1("Now it is the computers turn")
+			set_message_2("")
+		else:
+			set_message_1("Now it is player Os turn")
+			set_message_2(msg_initial_2)
 		$AudioPlayer.stream = second_move_sound
 		$AudioPlayer.play()
 		clear_help_image()
 	elif new_turn == TURN_OB:
 		$AudioPlayer.stream = computer_first_move_sound
 		$AudioPlayer.play()
-		set_message_1(msg_computer_first_move)
-		set_message_2("")
+		if GameSingleton.vs_computer:
+			set_message_1(msg_computer_first_move)
+			set_message_2("")
+		else:
+			set_message_1(msg_human_first_move)
+			set_message_2("")
+			
 	elif new_turn == TURN_GAME_OVER:
 		set_message_1(win_label)
 		set_message_2("The game is over.")
