@@ -237,12 +237,14 @@ class GameState:
 	var TURN_X_RESOLVE = 5
 	var TURN_GAME_OVER = 6
 	var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER"]
-	var debug_on = true
+	var simulation = false
+	var copy_text
 
 	func _init():
 		self.resolve_key = null
 		self.resolve_cells = []
 		self.board_indexes_that_will_collapse = Set.new()
+		self.copy_text = ""
 
 	func duplicate():
 		var new_matrix = []
@@ -254,6 +256,8 @@ class GameState:
 		new_game_state.turn = self.turn
 		new_game_state.matrix = new_matrix
 		new_game_state.move_key_list = self.move_key_list.duplicate(true)
+		new_game_state.resolve_key = self.resolve_key
+		new_game_state.resolve_cells = self.resolve_cells.duplicate(true)
 		return new_game_state
 
 	func increment_turn_number():
@@ -385,7 +389,7 @@ class GameState:
 	func check_for_collapse() -> bool:
 		for move_key in move_key_list:
 			var two_board_indices = get_cells_with_move(move_key)
-			print(move_key, " was found in two board indices ", two_board_indices)
+			#print(move_key, " was found in two board indices ", two_board_indices)
 			var cell_1 = matrix[two_board_indices[0]]
 			var cell_2 = matrix[two_board_indices[1]]
 			# Resolve cells are the two board indexes where this move exists
@@ -396,7 +400,8 @@ class GameState:
 			if recurse_check_for_collapse(move_key, cell_1.board_index, traversed_set_1):
 				resolve_key = move_key_list.back()
 				print("The resolve key is ", resolve_key)
-				resolve_cells = get_cells_with_move(move_key)
+				resolve_cells = get_cells_with_move(resolve_key)
+				print("The resolve cells are ", resolve_cells)
 				find_all_cells_that_will_collapse()
 				return true
 			else:
@@ -405,16 +410,19 @@ class GameState:
 				if recurse_check_for_collapse(move_key, cell_2.board_index, traversed_set_2):
 					resolve_key = move_key_list.back()
 					print("The resolve key is ", resolve_key)
-					resolve_cells = get_cells_with_move(move_key)
+					resolve_cells = get_cells_with_move(resolve_key)
+					print("The resolve cells are ", resolve_cells)
 					find_all_cells_that_will_collapse()
 					return true
 		return false
 	
 	func recurse_check_for_collapse(move_key, last_spot, traversed_set):
-		print("Recurse check ", move_key, " set: ", traversed_set)
+		#print("Recurse check ", move_key, " set: ", traversed_set)
 		var two_board_indices = get_cells_with_move(move_key)
 		var cell_to_process = two_board_indices[0]
-		if cell_to_process == last_spot:
+		#if two_board_indices.size() == 1:
+		#	print("WARN: get cells with move ", move_key, " only has one: ", two_board_indices)
+		if cell_to_process == last_spot and two_board_indices.size() > 1:
 			cell_to_process = two_board_indices[1]
 
 		var the_cell_info = matrix[cell_to_process]
@@ -422,7 +430,7 @@ class GameState:
 		for other_move in other_moves:
 			var new_traverse_key = str(the_cell_info.board_index) + other_move.key()
 			if traversed_set.contains(new_traverse_key):
-				print("  ", new_traverse_key, " was in the traversed set ", traversed_set)
+				#print("  ", new_traverse_key, " was in the traversed set ", traversed_set)
 				return true
 			else:
 				traversed_set.add(new_traverse_key)
@@ -472,7 +480,7 @@ class GameState:
 			move_key_list.append(new_move.key())
 
 		cell_info.add_move(turn_number, player_value())
-		if debug_on:
+		if !simulation:
 			print("--- After play ", turn_number, " mode: ", TURN_DISPLAY[turn], "     key: ", new_move.key(), " history: ", move_key_list)
 
 		var old_turn = increment_turn()
@@ -525,7 +533,8 @@ class GameState:
 			elif turn == TURN_OA or turn == TURN_OB:
 				turn = TURN_X_RESOLVE
 			else:
-				print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
+				if !simulation:
+					print("ERROR do not know how move to collapse ", TURN_DISPLAY[turn])
 		else:
 			if turn == TURN_XA:
 				turn = TURN_XB
@@ -776,7 +785,7 @@ func collapse_move(chosen_board_index, key):
 	#print("Collapse cell ", chosen_board_index, " for move ", key)
 
 	var collapse_moves = []
-	var classical_moves = game_state.play_resolve(chosen_board_index, key, collapse_moves)
+	game_state.play_resolve(chosen_board_index, key, collapse_moves)
 
 	# Update the GUI
 	for collapse_move in collapse_moves:
@@ -1019,7 +1028,7 @@ func print_stats(start_time: int) -> void:
 	stats.elapsed_time = str(OS.get_ticks_msec() - start_time) + " ms"
 	stats.nodes = visited_nodes
 	visited_nodes = 0
-	print("STATS:\n", stats)
+	print("STATS:  ", stats)
 
 
 func _on_HyperLinkButton_pressed():
@@ -1122,7 +1131,10 @@ func real_agent_moves(game_state):
 	if game_state.turn_number == 2:
 		# On the first move, grab two open corners
 		var open_corners = get_remaining_corners(game_state.matrix)
-		if open_corners.size() > 2:
+		if open_corners.size() > 3:
+			new_moves.append(open_corners[0])
+			new_moves.append(open_corners[3])
+		elif open_corners.size() > 2:
 			new_moves.append(open_corners[0])
 			new_moves.append(open_corners[2])
 		elif open_corners.size() > 1:
@@ -1134,17 +1146,21 @@ func real_agent_moves(game_state):
 		# TODO Need to stack rank the options here
 		var computer_moves = computer_search(game_state.duplicate())
 		print("The computer search moves are ", computer_moves)
+		if !computer_moves.empty():
+			# TODO just use the first one for right now
+			# but maybe we have a better heuristic
+			new_moves = computer_moves[0]
 		print("------ end search ------")
 		#game_state.print_matrix()
-		for possible_win in ALL_WINS:
-			var check_list = win_check(game_state.matrix, 1, possible_win)
-			if check_list[0] > 1:
-				if check_list[1].size() > 1:
-					print("Gotta block at ", check_list[1][0])
-					print("Still quantum: ", check_list[1])
-					if check_list[1].size() > 1:
-						return [check_list[1][0], check_list[1][1]]
-					new_moves.append(check_list[1][0])
+		#for possible_win in ALL_WINS:
+		#	var check_list = win_check(game_state.matrix, 1, possible_win)
+		#	if check_list[0] > 1:
+		#		if check_list[1].size() > 1:
+		#			print("Gotta block at ", check_list[1][0])
+		#			print("Still quantum: ", check_list[1])
+		#			if check_list[1].size() > 1:
+		#				return [check_list[1][0], check_list[1][1]]
+		#			new_moves.append(check_list[1][0])
 	#if turn_number == 4:
 	#	var open_corners = get_remaining_corners(matrix)
 	#	if open_corners.size() > 1:
@@ -1180,21 +1196,93 @@ func computer_search(gstate):
 	print("SEARCH: Empty tiles:  ", empty_tiles_array, " game st: ", TURN_DISPLAY[game_state.turn])
 	get_permutations(empty_tiles_array, possible_move_permutations)
 	#print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
+	var overall_worst_score = 10
+	var overall_worst_moves = []
+	var overall_best_score = -10
+	var overall_best_moves = []
 	for moves in possible_move_permutations:
 		print("------ START ", moves, " ------")
-		#print("SEARCH: Before copy state:  game st: ", TURN_DISPLAY[game_state.turn])
+		print("SEARCH: Before copy state:  game st: ", TURN_DISPLAY[game_state.turn])
 		var copy_state = copy_state_with_moves(gstate, moves)
-		var copy_score = copy_state.get_score()
-		print("SEARCH: Moves ", moves, " (score) => ", copy_score, "    copy turn: ", TURN_DISPLAY[copy_state.turn], " game st: ", TURN_DISPLAY[game_state.turn])
-		#if copy_state.turn == TURN_X_RESOLVE:
-		copy_state.print_matrix()
-		print("------ END   ", moves, " ------")
-	#print_stats(start_time)
-	return [-2, -2]
+		var copy_score = copy_state.check_victory()
+		# If this move will win the game, do it
+		# TODO consider ties also
+		# Keep track not just a single best move, but a list
+		# then randomly choose between them
+		print("SEARCH: (A) Moves ", moves, "  => ", copy_score, "    turn: ", TURN_DISPLAY[copy_state.turn], "   ", copy_state.copy_text)
+		if copy_score == -10:
+			return moves
+		var next_empty_tiles_array = copy_state.get_empty_tiles()
+		var next_possible_move_permutations = []
+		get_permutations(next_empty_tiles_array, next_possible_move_permutations)
+		# TODO use these to see what move we should do
+		var worst_move_score = 10
+		var worst_moves = null
+		var best_move_score = -10
+		var best_moves = null
+		for next_moves in next_possible_move_permutations:
+			visited_nodes += 1
+			#if moves == [0,6]:
+			#	print("Before state: turn ", TURN_DISPLAY[copy_state.turn])
+			#	copy_state.print_matrix()
+			var next_copy_state = copy_state_with_moves(copy_state, next_moves)
+			var next_copy_score = computer_quantum_score(next_copy_state, next_moves)
+			if next_copy_score < worst_move_score:
+				worst_move_score = next_copy_score
+				worst_moves = next_moves
+			if next_copy_score > best_move_score:
+				best_move_score = next_copy_score
+				best_moves = next_moves
+			print("    (B) Computer: ", moves, "  Player: ", next_moves,  " => ", next_copy_score, "     turn: ", TURN_DISPLAY[next_copy_state.turn], "   ", next_copy_state.copy_text)
+			#if moves == [0,6]:
+			#	print("After state: turn ", TURN_DISPLAY[next_copy_state.turn])
+			#	next_copy_state.print_matrix()
+		print("Worst move score: ", moves, worst_moves, " => ", worst_move_score)
+		print("Best move score:  ", moves, best_moves, " => ", best_move_score)
+		if overall_worst_score > worst_move_score:
+			overall_worst_score = worst_move_score
+			overall_worst_moves = [moves]
+		elif overall_worst_score == worst_move_score:
+			overall_worst_moves.append(moves)
+		if overall_best_score < best_move_score:
+			overall_best_score = best_move_score
+			overall_best_moves = [moves]
+		elif overall_best_score == best_move_score:
+			overall_best_moves.append(moves)
+		
+		#print(" ")
+		#copy_state.print_matrix()
+		#print("------ END   ", moves, " ------")
+	print("Overall worst:  ", overall_worst_moves, " => ", overall_worst_score)
+	print("Overall best:   ", overall_best_moves, " => ", overall_best_score)
+	var feasible_moves = []
+	for a_move in overall_worst_moves:
+		if overall_best_moves.find(a_move) == -1:
+			feasible_moves.append(a_move)
+	print("Feasible moves: ", feasible_moves)
+	print_stats(start_time)
+	if feasible_moves.empty():
+		print("There are no feasible moves")
+		if overall_worst_moves.empty():
+			print("There are no worst moves")
+			return [possible_move_permutations[0]]
+		else:
+			print("Taking the first of the worst (or best) moves")
+			return [overall_worst_moves[0]]
+	return feasible_moves
+	
+func computer_quantum_score(cstate, moves):
+	# First get the real score
+	var classical_score = cstate.check_victory()
+	if classical_score != 0:
+		return classical_score * 10
+		
+	return 0
+	
 
 func computer_alpha_beta_search(gstate, alpha, beta, is_max) -> Array:
 	# This method returns array [moves_array, utility]
-	visited_nodes += 1
+	visited_nodes += 1 
 	var empty_tiles_array = gstate.get_empty_tiles()
 	#print("cabs ", empty_tiles_array.size())
 	if gstate.is_game_over() or empty_tiles_array.size() == 0:
@@ -1233,9 +1321,47 @@ func computer_get_utility(gstate) -> int:
 
 func copy_state_with_moves(state, moves):
 	var new_state = state.duplicate()
-	new_state.debug_on = false
+	new_state.simulation = true
 	new_state.play_move(moves[0])
 	new_state.play_move(moves[1])
+	
+	if new_state.turn == TURN_X_RESOLVE or new_state.turn == TURN_O_RESOLVE:
+		#print("in copy state, we need to resolve from moves ", new_state.resolve_cells)
+		var option_one_state = new_state.duplicate()
+		var collapse_moves = []
+		# TODO not random, make a copy and check the score of both to decide which
+		# If its a tie, then I guess random
+		# but our quantums scoring should try to do better than that
+		option_one_state.play_resolve(option_one_state.resolve_cells[0], option_one_state.resolve_key, collapse_moves)
+		var option_one_score = option_one_state.get_score()
+		#print("Score for option 1 move ", option_one_state.resolve_cells[0], " is ", option_one_score)
+		new_state.copy_text = "   resolve [" + str(option_one_state.resolve_cells[0]) + "] = " + str(option_one_score)
+
+		var option_two_state = new_state.duplicate()
+		collapse_moves = []
+		# TODO If its a tie, then I guess random
+		# but our quantums scoring should try to do better than that
+		option_two_state.play_resolve(option_two_state.resolve_cells[1], option_two_state.resolve_key, collapse_moves)
+		var option_two_score = option_two_state.get_score()
+		#print("Score for option 2 move ", option_two_state.resolve_cells[1], " is ", option_two_score)
+		new_state.copy_text = new_state.copy_text + ",  [" + str(option_two_state.resolve_cells[1]) + "] = " + str(option_two_score)
+
+		collapse_moves = []
+		if new_state.turn == TURN_X_RESOLVE:
+			if option_one_score > option_two_score:
+				new_state.play_resolve(new_state.resolve_cells[0], new_state.resolve_key, collapse_moves)
+			else:
+				new_state.play_resolve(new_state.resolve_cells[1], new_state.resolve_key, collapse_moves)
+			new_state.turn = TURN_XA
+		else:
+			if option_one_score < option_two_score:
+				new_state.play_resolve(new_state.resolve_cells[0], new_state.resolve_key, collapse_moves)
+			else:
+				new_state.play_resolve(new_state.resolve_cells[1], new_state.resolve_key, collapse_moves)
+			new_state.turn = TURN_OA
+	else:
+		new_state.copy_text = ""
+
 	return new_state
 	
 func get_permutations(source_array, target_array):
