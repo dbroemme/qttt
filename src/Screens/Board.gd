@@ -1210,8 +1210,14 @@ func computer_search(gstate):
 		# Keep track not just a single best move, but a list
 		# then randomly choose between them
 		print("SEARCH: (A) Moves ", moves, "  => ", copy_score, "    turn: ", TURN_DISPLAY[copy_state.turn], "   ", copy_state.copy_text)
-		if copy_score == -10:
-			return moves
+		if copy_score == -1:
+			return [moves]
+
+		# TODO Check if the game is over at this point.
+		# If so, we don't need to keep going
+		if copy_state.is_game_over():
+			continue
+
 		var next_empty_tiles_array = copy_state.get_empty_tiles()
 		var next_possible_move_permutations = []
 		get_permutations(next_empty_tiles_array, next_possible_move_permutations)
