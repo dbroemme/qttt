@@ -238,6 +238,7 @@ class GameState:
 	var TURN_GAME_OVER = 6
 	var TURN_DISPLAY = ["XA", "XB", "O_RESOLVE", "OA", "OB", "X_RESOLVE", "GAME_OVER"]
 	var simulation = false
+	var both_win = false
 	var copy_text
 
 	func _init():
@@ -258,6 +259,7 @@ class GameState:
 		new_game_state.move_key_list = self.move_key_list.duplicate(true)
 		new_game_state.resolve_key = self.resolve_key
 		new_game_state.resolve_cells = self.resolve_cells.duplicate(true)
+		new_game_state.both_win = self.both_win
 		return new_game_state
 
 	func increment_turn_number():
@@ -316,7 +318,7 @@ class GameState:
 		return list
 
 	func is_game_over() -> bool:
-		if get_score() != 0 or get_empty_tiles().size() == 0:
+		if get_score() != 0 or get_empty_tiles().size() == 0 or both_win:
 			return true
 		else:
 			return false
@@ -327,30 +329,55 @@ class GameState:
 		return score * (matrix.size() + 1)
 
 	func check_victory() -> int:
+		var winner_score = 0
 		var classical_board = get_classical_board()
 		var winner = 0
 		winner = all_have_value(classical_board, 0, 3, 6)
 		if winner != 0:
-			return winner
+			winner_score = winner
 		winner = all_have_value(classical_board, 1, 4, 7)		
 		if winner != 0:
-			return winner
+			if winner != winner_score and winner_score != 0:
+				both_win = true
+				return 0
+			winner_score = winner
 		winner = all_have_value(classical_board, 2, 5, 8)
 		if winner != 0:
-			return winner
+			if winner != winner_score and winner_score != 0:
+				both_win = true
+				return 0
+			winner_score = winner
 		winner = all_have_value(classical_board, 0, 1, 2)
 		if winner != 0:
-			return winner
+			if winner != winner_score and winner_score != 0:
+				both_win = true
+				return 0
+			winner_score = winner
 		winner = all_have_value(classical_board, 3, 4, 5)		
 		if winner != 0:
-			return winner
+			if winner != winner_score and winner_score != 0:
+				both_win = true
+				return 0
+			winner_score = winner
 		winner = all_have_value(classical_board, 6, 7, 8)
 		if winner != 0:
-			return winner
+			if winner != winner_score and winner_score != 0:
+				both_win = true
+				return 0
+			winner_score = winner
 		winner = all_have_value(classical_board, 0, 4, 8)
 		if winner != 0:
-			return winner
-		return all_have_value(classical_board, 2, 4, 6)
+			if winner != winner_score and winner_score != 0:
+				both_win = true
+				return 0
+			winner_score = winner
+		winner = all_have_value(classical_board, 2, 4, 6)
+		if winner != 0:
+			if winner != winner_score and winner_score != 0:
+				both_win = true
+				return 0
+			winner_score = winner
+		return winner_score
 
 	func find_cells_with_quantum_move(key):
 		var result = []
@@ -801,7 +828,7 @@ func collapse_move(chosen_board_index, key):
 	#print("The move list is ", game_state.move_key_list, ", mode: ", TURN_DISPLAY[game_state.turn])
 	var classical_board = game_state.get_classical_board()
 	var result = game_state.check_victory()
-	if result != 0 or get_empty_tiles_for_classical(classical_board).size() == 0:
+	if game_state.is_game_over():
 		end_game(result)
 
 func all_have_value(classical_board, index1, index2, index3):
@@ -821,43 +848,36 @@ func highlight_victory(classical_board):
 		$Cell1/WinHighlight.visible = true
 		$Cell4/WinHighlight.visible = true
 		$Cell7/WinHighlight.visible = true
-		return
 	winner = all_have_value(classical_board, 1, 4, 7)		
 	if winner != 0:
 		$Cell2/WinHighlight.visible = true
 		$Cell5/WinHighlight.visible = true
 		$Cell8/WinHighlight.visible = true
-		return
 	winner = all_have_value(classical_board, 2, 5, 8)
 	if winner != 0:
 		$Cell3/WinHighlight.visible = true
 		$Cell6/WinHighlight.visible = true
 		$Cell9/WinHighlight.visible = true
-		return
 	winner = all_have_value(classical_board, 0, 1, 2)
 	if winner != 0:
 		$Cell1/WinHighlight.visible = true
 		$Cell2/WinHighlight.visible = true
 		$Cell3/WinHighlight.visible = true
-		return
 	winner = all_have_value(classical_board, 3, 4, 5)		
 	if winner != 0:
 		$Cell4/WinHighlight.visible = true
 		$Cell5/WinHighlight.visible = true
 		$Cell6/WinHighlight.visible = true
-		return
 	winner = all_have_value(classical_board, 6, 7, 8)
 	if winner != 0:
 		$Cell7/WinHighlight.visible = true
 		$Cell8/WinHighlight.visible = true
 		$Cell9/WinHighlight.visible = true
-		return
 	winner = all_have_value(classical_board, 0, 4, 8)
 	if winner != 0:
 		$Cell1/WinHighlight.visible = true
 		$Cell5/WinHighlight.visible = true
 		$Cell9/WinHighlight.visible = true
-		return
 	winner = all_have_value(classical_board, 2, 4, 6)
 	if winner != 0:
 		$Cell3/WinHighlight.visible = true
@@ -870,10 +890,14 @@ func end_game(value: int) -> void:
 		win_label = "X has won the game!"
 		highlight_victory(game_state.get_classical_board())
 	elif value == -1:
-		win_label = "O has won the game!!"
+		win_label = "O has won the game!"
 		highlight_victory(game_state.get_classical_board())
 	else: # value == 0
-		win_label = "It was a tie game"
+		if game_state.both_win == true:
+			win_label = "Both players won!"
+			highlight_victory(game_state.get_classical_board())
+		else:
+			win_label = "It was a tie game"
 	for the_cell in get_tree().get_nodes_in_group("cells"):
 		the_cell.clear_focus()
 	game_state.turn = TURN_GAME_OVER
