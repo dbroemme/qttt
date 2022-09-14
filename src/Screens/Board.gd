@@ -116,6 +116,34 @@ var msg_computer_get_to_resolve_2 = "The computer gets to choose which of the co
 var msg_human_get_to_resolve = "Player X chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves."
 var msg_human_get_to_resolve_2 = "Player O gets to choose which of the conflict spots Player X should take."
 
+class ScoreTracker:
+	var max_score: int
+	var max_score_moves: Array
+	var min_score: int
+	var min_score_moves: Array
+	func _init():
+		# These starting values are higher or lower than anything possible
+		max_score = -20
+		min_score = 20
+		max_score_moves = []
+		min_score_moves = []
+	func add_score(score, moves):
+		if max_score < score:
+			max_score = score
+			max_score_moves = [moves]
+		elif max_score == score:
+			max_score_moves.append(moves)
+		if min_score > score:
+			min_score = score
+			min_score_moves = [moves]
+		elif min_score == score:
+			min_score_moves.append(moves)
+	func to_display(prefix):
+		var display = prefix + "\n"
+		display = display + "max: " + str(max_score) + "    moves: " + str(max_score_moves) + "\n"
+		display = display + "min: " + str(min_score) + "    moves: " + str(min_score_moves) + "\n"
+		return display
+
 class Move:
 	var player: int        # 1 = X, -1 = O, 0 = nobody
 	var order: int         # the nth move of the game
@@ -155,6 +183,12 @@ class CellInfo:
 		return new_cell_info
 	func number_of_moves():
 		return moves.size()
+	func only_move_or_none(a_move_key):
+		if number_of_moves() == 0:
+			return true
+		if number_of_moves() == 1:
+			return has_move(a_move_key)
+		return false
 	func to_display():
 		if !is_quantum():
 			if get_value() == 1:
@@ -211,6 +245,16 @@ class CellInfo:
 					return true
 			return false
 		return false
+	func has_quantum_player_historical(player_val):
+		var the_value = get_value()
+		if the_value == 0:
+			var array_index = 0
+			var array_size = moves.size()
+			while array_index < array_size - 1:
+				if moves[array_index].player == player_val:
+					return true
+				array_index = array_index + 1
+		return false
 	func has_classical_player(player_val):
 		var the_value = get_value()
 		return the_value == player_val
@@ -261,6 +305,11 @@ class GameState:
 		new_game_state.resolve_cells = self.resolve_cells.duplicate(true)
 		new_game_state.both_win = self.both_win
 		return new_game_state
+
+	func last_move_key():
+		if self.move_key_list.empty():
+			return "X1"
+		return move_key_list.back()
 
 	func increment_turn_number():
 		turn_number = turn_number + 1
@@ -426,9 +475,9 @@ class GameState:
 			traversed_set_1.add(str(cell_1.board_index) + move_key)
 			if recurse_check_for_collapse(move_key, cell_1.board_index, traversed_set_1):
 				resolve_key = move_key_list.back()
-				print("The resolve key is ", resolve_key)
+				#print("The resolve key is ", resolve_key)
 				resolve_cells = get_cells_with_move(resolve_key)
-				print("The resolve cells are ", resolve_cells)
+				#print("The resolve cells are ", resolve_cells)
 				find_all_cells_that_will_collapse()
 				return true
 			else:
@@ -1152,29 +1201,26 @@ func get_remaining_corners(matrix):
 func real_agent_moves(game_state):
 	game_state.print_matrix()
 	var new_moves = []
-	if game_state.turn_number == 2:
+	#if game_state.turn_number == 2:
 		# On the first move, grab two open corners
-		var open_corners = get_remaining_corners(game_state.matrix)
-		if open_corners.size() > 3:
-			new_moves.append(open_corners[0])
-			new_moves.append(open_corners[3])
-		elif open_corners.size() > 2:
-			new_moves.append(open_corners[0])
-			new_moves.append(open_corners[2])
-		elif open_corners.size() > 1:
-			new_moves.append(open_corners[0])
-			new_moves.append(open_corners[1])
-	else:
-		# Is there somewhere that X can win right away? Defense first
-		# TODO try the search here and see
-		# TODO Need to stack rank the options here
-		var computer_moves = computer_search(game_state.duplicate())
-		print("The computer search moves are ", computer_moves)
-		if !computer_moves.empty():
-			# TODO just use the first one for right now
-			# but maybe we have a better heuristic
-			new_moves = computer_moves[0]
-		print("------ end search ------")
+	#	var open_corners = get_remaining_corners(game_state.matrix)
+	#	if open_corners.size() > 3:
+	#		new_moves.append(open_corners[0])
+	#		new_moves.append(open_corners[3])
+	#	elif open_corners.size() > 2:
+	#		new_moves.append(open_corners[0])
+	#		new_moves.append(open_corners[2])
+	#	elif open_corners.size() > 1:
+	#		new_moves.append(open_corners[0])
+	#		new_moves.append(open_corners[1])
+	#else:
+	var computer_moves = computer_search(game_state.duplicate())
+	print("The computer search moves are ", computer_moves)
+	if !computer_moves.empty():
+		# TODO just use the first one for right now
+		# but maybe we have a better heuristic
+		new_moves = computer_moves[0]
+	print("------ end search ------")
 		#game_state.print_matrix()
 		#for possible_win in ALL_WINS:
 		#	var check_list = win_check(game_state.matrix, 1, possible_win)
@@ -1220,36 +1266,31 @@ func computer_search(gstate):
 	print("SEARCH: Empty tiles:  ", empty_tiles_array, " game st: ", TURN_DISPLAY[game_state.turn])
 	get_permutations(empty_tiles_array, possible_move_permutations)
 	#print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
-	var overall_worst_score = 10
-	var overall_worst_moves = []
-	var overall_best_score = -10
-	var overall_best_moves = []
+	var computer_score_tracker = ScoreTracker.new()
+	var overall_score_tracker = ScoreTracker.new()
 	for moves in possible_move_permutations:
 		print("------ START ", moves, " ------")
-		print("SEARCH: Before copy state:  game st: ", TURN_DISPLAY[game_state.turn])
+		#print("SEARCH: Before copy state:  game st: ", TURN_DISPLAY[game_state.turn])
 		var copy_state = copy_state_with_moves(gstate, moves)
-		var copy_score = copy_state.check_victory()
-		# If this move will win the game, do it
-		# TODO consider ties also
-		# Keep track not just a single best move, but a list
-		# then randomly choose between them
+		#var copy_score = copy_state.check_victory()
+		var copy_score = computer_quantum_score(copy_state, moves)
 		print("SEARCH: (A) Moves ", moves, "  => ", copy_score, "    turn: ", TURN_DISPLAY[copy_state.turn], "   ", copy_state.copy_text)
-		if copy_score == -1:
+
+		# If its a computer win, then make this move
+		if copy_score == -10:
 			return [moves]
 
-		# TODO Check if the game is over at this point.
-		# If so, we don't need to keep going
+		computer_score_tracker.add_score(copy_score, moves)
+		
+		# If the game is over at this point, we don't need to keep going
 		if copy_state.is_game_over():
 			continue
 
 		var next_empty_tiles_array = copy_state.get_empty_tiles()
 		var next_possible_move_permutations = []
 		get_permutations(next_empty_tiles_array, next_possible_move_permutations)
-		# TODO use these to see what move we should do
-		var worst_move_score = 10
-		var worst_moves = null
-		var best_move_score = -10
-		var best_moves = null
+
+		var player_score_tracker = ScoreTracker.new()
 		for next_moves in next_possible_move_permutations:
 			visited_nodes += 1
 			#if moves == [0,6]:
@@ -1257,48 +1298,37 @@ func computer_search(gstate):
 			#	copy_state.print_matrix()
 			var next_copy_state = copy_state_with_moves(copy_state, next_moves)
 			var next_copy_score = computer_quantum_score(next_copy_state, next_moves)
-			if next_copy_score < worst_move_score:
-				worst_move_score = next_copy_score
-				worst_moves = next_moves
-			if next_copy_score > best_move_score:
-				best_move_score = next_copy_score
-				best_moves = next_moves
+			player_score_tracker.add_score(next_copy_score, next_moves)
 			print("    (B) Computer: ", moves, "  Player: ", next_moves,  " => ", next_copy_score, "     turn: ", TURN_DISPLAY[next_copy_state.turn], "   ", next_copy_state.copy_text)
 			#if moves == [0,6]:
 			#	print("After state: turn ", TURN_DISPLAY[next_copy_state.turn])
 			#	next_copy_state.print_matrix()
-		print("Worst move score: ", moves, worst_moves, " => ", worst_move_score)
-		print("Best move score:  ", moves, best_moves, " => ", best_move_score)
-		if overall_worst_score > worst_move_score:
-			overall_worst_score = worst_move_score
-			overall_worst_moves = [moves]
-		elif overall_worst_score == worst_move_score:
-			overall_worst_moves.append(moves)
-		if overall_best_score < best_move_score:
-			overall_best_score = best_move_score
-			overall_best_moves = [moves]
-		elif overall_best_score == best_move_score:
-			overall_best_moves.append(moves)
-		
-		#print(" ")
+		print(player_score_tracker.to_display("Player tracking"))
+		# TODO This updated the overall list based on the best worst from this subtree
+		overall_score_tracker.add_score(player_score_tracker.max_score, moves)
+		overall_score_tracker.add_score(player_score_tracker.min_score, moves)
 		#copy_state.print_matrix()
 		#print("------ END   ", moves, " ------")
-	print("Overall worst:  ", overall_worst_moves, " => ", overall_worst_score)
-	print("Overall best:   ", overall_best_moves, " => ", overall_best_score)
+	print(computer_score_tracker.to_display("Computer tracking"))
+	print(overall_score_tracker.to_display("Overall tracking"))
 	var feasible_moves = []
-	for a_move in overall_worst_moves:
-		if overall_best_moves.find(a_move) == -1:
+	# If a move was on the best and worst list, then remove it from feasible moves
+	for a_move in overall_score_tracker.min_score_moves:
+		if overall_score_tracker.max_score_moves.find(a_move) == -1:
 			feasible_moves.append(a_move)
+	
+	# What we want is something from computer tracker worst and player worst
+	# If there is an intersection, that is great
 	print("Feasible moves: ", feasible_moves)
 	print_stats(start_time)
 	if feasible_moves.empty():
 		print("There are no feasible moves")
-		if overall_worst_moves.empty():
+		if overall_score_tracker.min_score_moves.empty():
 			print("There are no worst moves")
 			return [possible_move_permutations[0]]
 		else:
 			print("Taking the first of the worst (or best) moves")
-			return [overall_worst_moves[0]]
+			return [overall_score_tracker.min_score_moves[0]]
 	return feasible_moves
 	
 func computer_quantum_score(cstate, moves):
@@ -1306,8 +1336,28 @@ func computer_quantum_score(cstate, moves):
 	var classical_score = cstate.check_victory()
 	if classical_score != 0:
 		return classical_score * 10
-		
-	return 0
+	
+	var last_move_key = cstate.last_move_key()
+	var running_score = 0
+	# Remember to add negative scores for the computer here, i.e. the worst is the best in this case
+	for potential_move in moves:
+		var the_cell_info = cstate.matrix[potential_move]
+		if the_cell_info.only_move_or_none(last_move_key):
+			# Score each move higher if the cell is empty, i.e. has no other quantum moves
+			# 1 point for empty and another point that computer is not already there
+			# Score each move higher if it is an unoccupied corner
+			running_score = running_score - 2
+			if potential_move == 0 or potential_move == 2 or potential_move == 6 or potential_move == 8:
+				running_score = running_score - 1
+		elif !the_cell_info.has_quantum_player_historical(-1):
+			# Score each move higher if the computer does not already have a mark there
+			running_score = running_score - 1
+	
+	# TODO avoid entanglements
+	# TODO increase probable wins. We have logic for this
+	# TODO create a table here that shows how the math works out for different probabilities
+
+	return running_score
 	
 
 func computer_alpha_beta_search(gstate, alpha, beta, is_max) -> Array:
