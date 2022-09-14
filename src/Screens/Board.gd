@@ -1058,10 +1058,13 @@ func on_cell_clicked(cell: Area2D):
 	
 	if game_state.turn == TURN_OA:
 		make_computer_move()
-	elif game_state.turn == TURN_XB and game_state.get_empty_tiles() == 1:
+	elif game_state.turn == TURN_XB and game_state.get_empty_tiles().size() == 1:
 		# Make this a classical X because it is the last open spot on the board
-		play(cell)
-
+		var cell_info = game_state.get_cell_info(cell.board_index)
+		cell_info.make_classical(game_state.last_move_key())
+		cell.make_classical(true)
+		var result = game_state.check_victory()
+		end_game(result)
 
 func make_computer_move():
 	if game_state.turn == TURN_O_RESOLVE:
