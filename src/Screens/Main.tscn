@@ -43,9 +43,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 margin_left = -251.0
-margin_top = -83.0
+margin_top = -109.0
 margin_right = 252.0
-margin_bottom = 153.0
+margin_bottom = 176.0
 custom_constants/separation = 25
 __meta__ = {
 "_edit_use_anchors_": false
@@ -53,7 +53,7 @@ __meta__ = {
 
 [node name="PvCEasy" type="Button" parent="Menu"]
 margin_right = 503.0
-margin_bottom = 62.0
+margin_bottom = 52.0
 size_flags_vertical = 3
 custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
 custom_fonts/font = SubResource( 2 )
@@ -66,9 +66,9 @@ vs_computer = true
 easy_mode = true
 
 [node name="PvCHard" type="Button" parent="Menu"]
-margin_top = 87.0
+margin_top = 77.0
 margin_right = 503.0
-margin_bottom = 149.0
+margin_bottom = 130.0
 size_flags_vertical = 3
 custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
 custom_fonts/font = SubResource( 2 )
@@ -80,9 +80,9 @@ __meta__ = {
 vs_computer = true
 
 [node name="PvPButton" type="Button" parent="Menu"]
-margin_top = 174.0
+margin_top = 155.0
 margin_right = 503.0
-margin_bottom = 236.0
+margin_bottom = 207.0
 size_flags_vertical = 3
 custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
 custom_fonts/font = SubResource( 2 )
@@ -92,6 +92,21 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="QuitButton" type="Button" parent="Menu"]
+margin_top = 232.0
+margin_right = 503.0
+margin_bottom = 285.0
+size_flags_vertical = 3
+custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
+custom_fonts/font = SubResource( 2 )
+text = "Quit"
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+quit_game = true
+
 [connection signal="button_up" from="Menu/PvCEasy" to="Menu/PvCEasy" method="_on_button_up"]
 [connection signal="button_up" from="Menu/PvCHard" to="Menu/PvCHard" method="_on_button_up"]
 [connection signal="button_up" from="Menu/PvPButton" to="Menu/PvPButton" method="_on_button_up"]
+[connection signal="button_up" from="Menu/QuitButton" to="Menu/QuitButton" method="_on_button_up"]

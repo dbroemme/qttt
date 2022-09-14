@@ -319,7 +319,7 @@ margin_left = -197.0
 margin_top = 267.0
 margin_right = 132.0
 margin_bottom = 307.0
-text = "Play again"
+text = "Back to menu"
 __meta__ = {
 "_edit_use_anchors_": false
 }
