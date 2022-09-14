@@ -116,6 +116,39 @@ var msg_computer_get_to_resolve_2 = "The computer gets to choose which of the co
 var msg_human_get_to_resolve = "Player X chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves."
 var msg_human_get_to_resolve_2 = "Player O gets to choose which of the conflict spots Player X should take."
 
+class QuantumNode:
+	var moves
+	var score
+	var level
+	var children
+	func _init(a_moves, a_score, a_level):
+		self.moves = a_moves
+		self.score = a_score
+		self.level = a_level
+		self.children = []
+	func add_child(a_child):
+		self.children.append(a_child)
+	func add_child_with_values(a_moves, a_score):
+		var new_child = QuantumNode.new(a_moves, a_score, self.level + 1)
+		self.children.append(new_child)
+		return new_child
+	func is_leaf():
+		return children.size() == 0
+	func get_max_child_score():
+		var max_score = -100
+		var max_moves = null
+		for child in self.children:
+			if child.score > max_score:
+				max_score = child.score 
+				max_moves = child.moves 
+		return [max_score, max_moves]
+
+class MyQuantumSorter:
+	static func sort_ascending(a, b):
+		if a.score < b.score:
+			return true
+		return false
+
 class ScoreTracker:
 	var max_score: int
 	var max_score_moves: Array
@@ -305,6 +338,9 @@ class GameState:
 		new_game_state.resolve_cells = self.resolve_cells.duplicate(true)
 		new_game_state.both_win = self.both_win
 		return new_game_state
+
+	func get_cell_info(index):
+		return matrix[index]
 
 	func last_move_key():
 		if self.move_key_list.empty():
@@ -1268,12 +1304,15 @@ func computer_search(gstate):
 	#print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
 	var computer_score_tracker = ScoreTracker.new()
 	var overall_score_tracker = ScoreTracker.new()
+	var root_node = QuantumNode.new(null, 0, 1)
+	var next_node = null
 	for moves in possible_move_permutations:
 		print("------ START ", moves, " ------")
 		#print("SEARCH: Before copy state:  game st: ", TURN_DISPLAY[game_state.turn])
 		var copy_state = copy_state_with_moves(gstate, moves)
 		#var copy_score = copy_state.check_victory()
 		var copy_score = computer_quantum_score(copy_state, moves)
+		next_node = root_node.add_child_with_values(moves, copy_score)
 		print("SEARCH: (A) Moves ", moves, "  => ", copy_score, "    turn: ", TURN_DISPLAY[copy_state.turn], "   ", copy_state.copy_text)
 
 		# If its a computer win, then make this move
@@ -1297,7 +1336,9 @@ func computer_search(gstate):
 			#	print("Before state: turn ", TURN_DISPLAY[copy_state.turn])
 			#	copy_state.print_matrix()
 			var next_copy_state = copy_state_with_moves(copy_state, next_moves)
-			var next_copy_score = computer_quantum_score(next_copy_state, next_moves)
+			var next_copy_score = player_quantum_score(next_copy_state, next_moves)
+			next_node.add_child_with_values(next_moves, next_copy_score)
+
 			player_score_tracker.add_score(next_copy_score, next_moves)
 			print("    (B) Computer: ", moves, "  Player: ", next_moves,  " => ", next_copy_score, "     turn: ", TURN_DISPLAY[next_copy_state.turn], "   ", next_copy_state.copy_text)
 			#if moves == [0,6]:
@@ -1309,28 +1350,51 @@ func computer_search(gstate):
 		overall_score_tracker.add_score(player_score_tracker.min_score, moves)
 		#copy_state.print_matrix()
 		#print("------ END   ", moves, " ------")
-	print(computer_score_tracker.to_display("Computer tracking"))
-	print(overall_score_tracker.to_display("Overall tracking"))
+	#print(computer_score_tracker.to_display("Computer tracking"))
+	#print(overall_score_tracker.to_display("Overall tracking"))
 	var feasible_moves = []
 	# If a move was on the best and worst list, then remove it from feasible moves
-	for a_move in overall_score_tracker.min_score_moves:
-		if overall_score_tracker.max_score_moves.find(a_move) == -1:
-			feasible_moves.append(a_move)
+	#for a_move in overall_score_tracker.min_score_moves:
+	#	if overall_score_tracker.max_score_moves.find(a_move) == -1:
+	#		feasible_moves.append(a_move)
 	
+	# Sort the list first by score
+	root_node.children.sort_custom(MyQuantumSorter, "sort_ascending")
+	# Display from the quantum tree
+	for computer_node in root_node.children:
+		var max_child_score = computer_node.get_max_child_score()
+		print(computer_node.moves, "  =  ", computer_node.score, "    Player best: ", str(max_child_score[0]) + " with move ", str(max_child_score[1]))
+		#for player_node in computer_node.children:
+		#	print("    ", player_node.moves, "  =  ", player_node.score)
+			
 	# What we want is something from computer tracker worst and player worst
 	# If there is an intersection, that is great
-	print("Feasible moves: ", feasible_moves)
+	#print("Feasible moves: ", feasible_moves)
 	print_stats(start_time)
+	#return feasible_moves
+	var the_best_score = null
+	for computer_node in root_node.children:
+		var include_this_one = true
+		if the_best_score == null:
+			the_best_score = computer_node.score
+		elif computer_node.score > the_best_score:
+			include_this_one = false
+
+		var max_child_score = computer_node.get_max_child_score()
+		var max_player_score = max_child_score[0]
+		if max_player_score < 100:
+			if include_this_one:
+				feasible_moves.append(computer_node.moves)
+			elif feasible_moves.empty():
+				feasible_moves.append(computer_node.moves)
+	
 	if feasible_moves.empty():
 		print("There are no feasible moves")
-		if overall_score_tracker.min_score_moves.empty():
-			print("There are no worst moves")
-			return [possible_move_permutations[0]]
-		else:
-			print("Taking the first of the worst (or best) moves")
-			return [overall_score_tracker.min_score_moves[0]]
-	return feasible_moves
-	
+		return [root_node.children.back()]
+	else:
+		print("Taking the first of the feasible moves")
+		return [feasible_moves[0]]
+
 func computer_quantum_score(cstate, moves):
 	# First get the real score
 	var classical_score = cstate.check_victory()
@@ -1358,7 +1422,54 @@ func computer_quantum_score(cstate, moves):
 	# TODO create a table here that shows how the math works out for different probabilities
 
 	return running_score
+
+func distance_to_win(cstate, the_play, the_player):
+	var running_score = 0
+	for cell_index in the_play:
+		var cell_info = cstate.get_cell_info(cell_index)
+		var cell_value = cell_info.get_value()
+		if cell_value == the_player:
+			running_score = running_score + 2
+		elif cell_value == -the_player:
+			return 0
+		elif cell_info.has_quantum_player(the_player):
+			running_score = running_score + 1
+
+	running_score = running_score * the_player
+	return running_score	
 	
+func player_quantum_score(cstate, moves):
+	# First get the real score
+	var classical_score = cstate.check_victory()
+	if classical_score != 0:
+		return classical_score * 100
+	
+	# look at how many potential winning plays, and how close we are
+	# if it is still possible, the score is based on the distance
+	var running_score = 0
+	for a_win in ALL_WINS:
+		running_score = running_score + distance_to_win(cstate, a_win, 1)
+	return running_score
+
+func quantum_minimax(node, depth, is_max):
+	if depth == 0 or node.is_leaf():  
+		return node.score 
+  
+	var max_eva
+	var min_eva
+	var eva
+	if is_max:      # for Maximizer Player
+		max_eva = -100
+		for child in node.children: 
+			eva = quantum_minimax(child, depth-1, false)  
+			max_eva = max(max_eva, eva)        # ives Maximum of the values  
+		return max_eva  
+	else:          # for Minimizer player  
+		min_eva = 100   
+		for child in node.children: 
+			eva = quantum_minimax(child, depth-1, true)  
+			min_eva = min(min_eva, eva)       # gives minimum of the values  
+		return min_eva
 
 func computer_alpha_beta_search(gstate, alpha, beta, is_max) -> Array:
 	# This method returns array [moves_array, utility]
