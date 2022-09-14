@@ -1,9 +1,11 @@
 extends Node
 
 var vs_computer
+var easy_mode
 
 func _ready():
 	vs_computer = true
+	easy_mode = false
 	
 func display_nodes(nodes):
 	var count = 0

@@ -51,13 +51,28 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PvCButton" type="Button" parent="Menu"]
+[node name="PvCEasy" type="Button" parent="Menu"]
 margin_right = 503.0
-margin_bottom = 71.0
+margin_bottom = 46.0
 size_flags_vertical = 3
 custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
 custom_fonts/font = SubResource( 2 )
-text = "Play against the computer"
+text = "Play the computer (easy)"
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+vs_computer = true
+easy_mode = true
+
+[node name="PvCHard" type="Button" parent="Menu"]
+margin_top = 71.0
+margin_right = 503.0
+margin_bottom = 117.0
+size_flags_vertical = 3
+custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
+custom_fonts/font = SubResource( 2 )
+text = "Play the computer (hard)"
 script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -65,9 +80,9 @@ __meta__ = {
 vs_computer = true
 
 [node name="PvPButton" type="Button" parent="Menu"]
-margin_top = 96.0
+margin_top = 142.0
 margin_right = 503.0
-margin_bottom = 167.0
+margin_bottom = 188.0
 size_flags_vertical = 3
 custom_colors/font_color = Color( 0.392157, 0.631373, 0.803922, 1 )
 custom_fonts/font = SubResource( 2 )
@@ -77,5 +92,6 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[connection signal="button_up" from="Menu/PvCButton" to="Menu/PvCButton" method="_on_button_up"]
+[connection signal="button_up" from="Menu/PvCEasy" to="Menu/PvCEasy" method="_on_button_up"]
+[connection signal="button_up" from="Menu/PvCHard" to="Menu/PvCHard" method="_on_button_up"]
 [connection signal="button_up" from="Menu/PvPButton" to="Menu/PvPButton" method="_on_button_up"]

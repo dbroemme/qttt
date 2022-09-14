@@ -1387,7 +1387,9 @@ func computer_search(gstate):
 				feasible_moves.append(computer_node.moves)
 			elif feasible_moves.empty():
 				feasible_moves.append(computer_node.moves)
-	
+		elif GameSingleton.vs_computer:
+			feasible_moves.append(computer_node.moves)
+
 	if feasible_moves.empty():
 		print("There are no feasible moves")
 		return [root_node.children.back()]
