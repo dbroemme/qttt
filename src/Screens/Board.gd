@@ -1058,6 +1058,9 @@ func on_cell_clicked(cell: Area2D):
 	
 	if game_state.turn == TURN_OA:
 		make_computer_move()
+	elif game_state.turn == TURN_XB and game_state.get_empty_tiles() == 1:
+		# Make this a classical X because it is the last open spot on the board
+		play(cell)
 
 
 func make_computer_move():
@@ -1169,7 +1172,7 @@ func _on_PlayAgainButton_pressed():
 		the_cell.classical = false
 		the_cell.initial_hide()
 	update_gui_after_turn(TURN_XA, TURN_XA, 1)
-	
+	get_tree().change_scene("res://src/Screens/Main.tscn")
 #
 # Real computer strategy
 #
@@ -1387,7 +1390,7 @@ func computer_search(gstate):
 				feasible_moves.append(computer_node.moves)
 			elif feasible_moves.empty():
 				feasible_moves.append(computer_node.moves)
-		elif GameSingleton.vs_computer:
+		elif GameSingleton.easy_mode:
 			feasible_moves.append(computer_node.moves)
 
 	if feasible_moves.empty():
