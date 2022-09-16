@@ -1470,10 +1470,13 @@ func computer_search(gstate):
 				feasible_moves.append(computer_node.moves)
 			elif feasible_moves.empty():
 				feasible_moves.append(computer_node.moves)
+			elif GameSingleton.easy_mode:
+				if rng.randi_range(0, 9) > 5:
+					feasible_moves.append(computer_node.moves)
 		elif GameSingleton.easy_mode:
-			if rng.randi_range(0, 9) > 6:
+			if rng.randi_range(0, 50) > 42:
 				feasible_moves.append(computer_node.moves)
-
+			
 	if feasible_moves.empty():
 		print("There are no feasible moves")
 		return [root_node.children.back()]
