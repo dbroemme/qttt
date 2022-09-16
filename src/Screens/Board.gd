@@ -56,6 +56,8 @@ var rng = RandomNumberGenerator.new()
 var msg_initial_1 = """You are X, and you get to go first.
 
 Each player makes two quantum moves on each turn. Think of these as multiple potential games being played at once.
+
+Each quantum move has a numeric subscript that indicates the turn number.
 """
 var human_msg_initial_1 = """The first player is X.
 
@@ -88,7 +90,7 @@ Remember that only classical moves can win the game.
 var msg_you_resolved_conflict_2 = "Now make your first quantum move of the turn."
 
 var msg_computer_first_move = "The computer made its first quantum move, now for the second ..."
-var msg_computer_second_move = "The computer finished its quantum moves for that round. Now it is your turn again."
+var msg_computer_second_move = "The computer finished its moves for that turn. Now it is your turn again."
 
 var msg_human_first_move = "Player O made its first quantum move, now for the second ..."
 var msg_human_second_move = "Player O finished its quantum moves for that round. Now it is player X again."
@@ -96,10 +98,8 @@ var msg_human_turn = "Player X, its your turn. Click in a non-classical space fo
 
 
 var msg_your_turn = "Click in a non-classical space to make your first quantum move of the turn."
-var msg_you_get_to_resolve = """The computer chose a move that resulted in a conflict, so now some quantum moves need to be resolved into real (or classical) moves.
+var msg_you_get_to_resolve = "The computer chose a move that resulted in a conflict, so now some quantum moves need to be resolved into real (or classical) moves."
 
-Some earlier quantum games are no longer possible, so one resolved space often leads to other spaces being resolved.
-"""
 var msg_you_get_to_resolve_2 = """You get to choose which of the conflict spots the computer should take. Click on a highlighted space to choose.
 """
 
@@ -1108,7 +1108,7 @@ func on_cell_clicked(cell: Area2D):
 				collapse_move(cell.board_index, game_state.resolve_key)
 				game_state.turn = TURN_OA
 				game_state.increment_turn_number()
-				update_gui_after_turn(TURN_O_RESOLVE, TURN_XA, game_state.turn_number)
+				update_gui_after_turn(TURN_O_RESOLVE, TURN_OA, game_state.turn_number)
 			else:
 				print("The cell ", cell.board_index, " is not a resolve cell")
 				GameSingleton.display_nodes(game_state.resolve_cells)
@@ -1471,7 +1471,8 @@ func computer_search(gstate):
 			elif feasible_moves.empty():
 				feasible_moves.append(computer_node.moves)
 		elif GameSingleton.easy_mode:
-			feasible_moves.append(computer_node.moves)
+			if rng.randi_range(0, 9) > 6:
+				feasible_moves.append(computer_node.moves)
 
 	if feasible_moves.empty():
 		print("There are no feasible moves")
