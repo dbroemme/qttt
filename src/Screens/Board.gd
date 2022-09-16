@@ -1068,21 +1068,36 @@ func on_cell_clicked(cell: Area2D):
 
 func make_computer_move():
 	if game_state.turn == TURN_O_RESOLVE:
-		print("Its resolve mode, so the computer has to decide resolution")
-		#print("Resolve cells:")
-		#GameSingleton.display_nodes(game_state.resolve_cells)
-		var computer_selected_cell
-		if rng.randi_range(0, 9) > 5:
-			computer_selected_cell = game_state.resolve_cells[0]
-		else:
-			computer_selected_cell = game_state.resolve_cells[1]
-		print("Computer selected resolve node", computer_selected_cell)
-		computer_move_1 = computer_selected_cell
+		print("Its resolve mode, so the computer has to play out both scenarios")
+		computer_move_1 = computer_decide_on_resolve_move()
+		print("Computer decided to resolve node ", computer_move_1)
 		var timer = get_tree().create_timer(4)
 		timer.connect("timeout",self,"delayed_computer_resolve")
 	else:
 		make_regular_computer_move()
 
+func computer_decide_on_resolve_move():
+	var option_one_state = game_state.duplicate()
+	var collapse_moves = []
+	# Make a copy and check the score of both to decide which
+	# If its a tie, then random
+	option_one_state.play_resolve(option_one_state.resolve_cells[0], option_one_state.resolve_key, collapse_moves)
+	var option_one_score = option_one_state.get_score()
+	print("Score for option 1 move ", option_one_state.resolve_cells[0], " is ", option_one_score)
+	game_state.copy_text = "   resolve [" + str(option_one_state.resolve_cells[0]) + "] = " + str(option_one_score)
+
+	var option_two_state = game_state.duplicate()
+	collapse_moves = []
+	option_two_state.play_resolve(option_two_state.resolve_cells[1], option_two_state.resolve_key, collapse_moves)
+	var option_two_score = option_two_state.get_score()
+	print("Score for option 2 move ", option_two_state.resolve_cells[1], " is ", option_two_score)
+	game_state.copy_text = game_state.copy_text + ",  [" + str(option_two_state.resolve_cells[1]) + "] = " + str(option_two_score)
+
+	if option_one_score < option_two_score:
+		return game_state.resolve_cells[0]
+	else:
+		return game_state.resolve_cells[1]
+	
 func make_regular_computer_move():
 	if GameSingleton.vs_computer and !game_state.is_game_over():
 		var computer_indexes = real_agent_moves(game_state)
@@ -1400,8 +1415,9 @@ func computer_search(gstate):
 		print("There are no feasible moves")
 		return [root_node.children.back()]
 	else:
-		print("Taking the first of the feasible moves")
-		return [feasible_moves[0]]
+		var randomly_chosen_move_index = rng.randi_range(0, feasible_moves.size() - 1)
+		print("Picking randomly ", randomly_chosen_move_index, " move out of ", feasible_moves.size(), " feasible moves")
+		return [feasible_moves[randomly_chosen_move_index]]
 
 func computer_quantum_score(cstate, moves):
 	# First get the real score
