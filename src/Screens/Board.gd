@@ -1385,8 +1385,6 @@ func computer_search(gstate):
 	print("SEARCH: Empty tiles:  ", empty_tiles_array, " game st: ", TURN_DISPLAY[game_state.turn])
 	get_permutations(empty_tiles_array, possible_move_permutations)
 	#print("SEARCH: Permutations: ", possible_move_permutations, " game st: ", TURN_DISPLAY[game_state.turn])
-	var computer_score_tracker = ScoreTracker.new()
-	var overall_score_tracker = ScoreTracker.new()
 	var root_node = QuantumNode.new(null, 0, 1)
 	var next_node = null
 	for moves in possible_move_permutations:
@@ -1401,8 +1399,6 @@ func computer_search(gstate):
 		# If its a computer win, then make this move
 		if copy_score == -10:
 			return [moves]
-
-		computer_score_tracker.add_score(copy_score, moves)
 		
 		# If the game is over at this point, we don't need to keep going
 		if copy_state.is_game_over():
@@ -1412,7 +1408,6 @@ func computer_search(gstate):
 		var next_possible_move_permutations = []
 		get_permutations(next_empty_tiles_array, next_possible_move_permutations)
 
-		var player_score_tracker = ScoreTracker.new()
 		for next_moves in next_possible_move_permutations:
 			visited_nodes += 1
 			#if moves == [0,6]:
@@ -1422,25 +1417,12 @@ func computer_search(gstate):
 			var next_copy_score = player_quantum_score(next_copy_state, next_moves)
 			next_node.add_child_with_values(next_moves, next_copy_score)
 
-			player_score_tracker.add_score(next_copy_score, next_moves)
 			print("    (B) Computer: ", moves, "  Player: ", next_moves,  " => ", next_copy_score, "     turn: ", TURN_DISPLAY[next_copy_state.turn], "   ", next_copy_state.copy_text)
 			#if moves == [0,6]:
 			#	print("After state: turn ", TURN_DISPLAY[next_copy_state.turn])
 			#	next_copy_state.print_matrix()
-		print(player_score_tracker.to_display("Player tracking"))
-		# TODO This updated the overall list based on the best worst from this subtree
-		overall_score_tracker.add_score(player_score_tracker.max_score, moves)
-		overall_score_tracker.add_score(player_score_tracker.min_score, moves)
-		#copy_state.print_matrix()
 		#print("------ END   ", moves, " ------")
-	#print(computer_score_tracker.to_display("Computer tracking"))
-	#print(overall_score_tracker.to_display("Overall tracking"))
-	var feasible_moves = []
-	# If a move was on the best and worst list, then remove it from feasible moves
-	#for a_move in overall_score_tracker.min_score_moves:
-	#	if overall_score_tracker.max_score_moves.find(a_move) == -1:
-	#		feasible_moves.append(a_move)
-	
+	var feasible_moves = []	
 	# Sort the list first by score
 	root_node.children.sort_custom(MyQuantumSorter, "sort_ascending")
 	# Display from the quantum tree
@@ -1450,9 +1432,6 @@ func computer_search(gstate):
 		#for player_node in computer_node.children:
 		#	print("    ", player_node.moves, "  =  ", player_node.score)
 			
-	# What we want is something from computer tracker worst and player worst
-	# If there is an intersection, that is great
-	#print("Feasible moves: ", feasible_moves)
 	print_stats(start_time)
 	#return feasible_moves
 	var the_best_score = null
