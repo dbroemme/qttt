@@ -1,0 +1,60 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://asset/tileBlue_02.png" type="Texture" id=1]
+[ext_resource path="res://src/MiniCell.tscn" type="PackedScene" id=2]
+
+[node name="MiniBoard" type="Node2D"]
+
+[node name="SpriteLeftVertical" type="Sprite" parent="."]
+position = Vector2( 60.5893, 111.978 )
+rotation = 1.5708
+scale = Vector2( 0.938166, 0.0692869 )
+texture = ExtResource( 1 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="SpriteRightVertical" type="Sprite" parent="."]
+position = Vector2( 119.411, 111.978 )
+rotation = 1.5708
+scale = Vector2( 0.938166, 0.0806512 )
+texture = ExtResource( 1 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="SpriteTopHorizontal" type="Sprite" parent="."]
+position = Vector2( 64.9284, 60 )
+rotation = 3.14159
+scale = Vector2( 0.922208, 0.0806482 )
+texture = ExtResource( 1 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="SpriteBottomHorizontal" type="Sprite" parent="."]
+position = Vector2( 66.5642, 120 )
+rotation = 3.14159
+scale = Vector2( 0.916889, 0.0806482 )
+texture = ExtResource( 1 )
+offset = Vector2( -25.5143, -7.85715 )
+
+[node name="Cell0" parent="." instance=ExtResource( 2 )]
+
+[node name="Cell1" parent="." instance=ExtResource( 2 )]
+position = Vector2( 64, 0 )
+
+[node name="Cell2" parent="." instance=ExtResource( 2 )]
+position = Vector2( 124, 0 )
+
+[node name="Cell3" parent="." instance=ExtResource( 2 )]
+position = Vector2( 0, 68 )
+
+[node name="Cell4" parent="." instance=ExtResource( 2 )]
+position = Vector2( 64, 68 )
+
+[node name="Cell5" parent="." instance=ExtResource( 2 )]
+position = Vector2( 124, 68 )
+
+[node name="Cell6" parent="." instance=ExtResource( 2 )]
+position = Vector2( 0, 128 )
+
+[node name="Cell7" parent="." instance=ExtResource( 2 )]
+position = Vector2( 64, 128 )
+
+[node name="Cell8" parent="." instance=ExtResource( 2 )]
+position = Vector2( 124, 128 )

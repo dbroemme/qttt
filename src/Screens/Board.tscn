@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://src/Screens/Board.gd" type="Script" id=1]
 [ext_resource path="res://asset/HelpSubscript.png" type="Texture" id=2]
@@ -9,6 +9,7 @@
 [ext_resource path="res://asset/dan-cristian-padure-h3kuhYUCE9A-unsplash.jpg" type="Texture" id=7]
 [ext_resource path="res://src/Screens/BoardCamera.gd" type="Script" id=8]
 [ext_resource path="res://asset/KenneyFuture.ttf" type="DynamicFontData" id=9]
+[ext_resource path="res://src/MiniBoard.tscn" type="PackedScene" id=10]
 
 [sub_resource type="DynamicFont" id=2]
 size = 22
@@ -324,5 +325,34 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="PreviousStateLabel" type="RichTextLabel" parent="."]
+visible = false
+margin_left = -205.0
+margin_top = 224.0
+margin_right = -23.0
+margin_bottom = 311.0
+custom_fonts/normal_font = SubResource( 2 )
+text = "State
+before
+resolve"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HidePreviousButton" type="Button" parent="."]
+margin_left = -186.0
+margin_top = 315.0
+margin_right = -80.0
+margin_bottom = 355.0
+text = "Hide resolve"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MiniBoard" parent="." instance=ExtResource( 10 )]
+visible = false
+position = Vector2( -51, 216 )
+
 [connection signal="pressed" from="HyperLinkButton" to="." method="_on_HyperLinkButton_pressed"]
 [connection signal="pressed" from="PlayAgainButton" to="." method="_on_PlayAgainButton_pressed"]
+[connection signal="pressed" from="HidePreviousButton" to="." method="_on_HidePreviousButton_pressed"]

@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://asset/o.png" type="Texture" id=1]
+[ext_resource path="res://asset/o_grey_small.png" type="Texture" id=2]
+[ext_resource path="res://asset/x_grey_small.png" type="Texture" id=3]
+[ext_resource path="res://asset/x.png" type="Texture" id=4]
+
+[node name="MiniCell" type="Node2D"]
+
+[node name="ClassicalX" type="Sprite" parent="."]
+visible = false
+position = Vector2( 30, 30 )
+scale = Vector2( 0.6, 0.6 )
+texture = ExtResource( 4 )
+
+[node name="ClassicalO" type="Sprite" parent="."]
+visible = false
+position = Vector2( 30, 30 )
+scale = Vector2( 0.6, 0.6 )
+texture = ExtResource( 1 )
+
+[node name="QuantumX" type="Sprite" parent="."]
+visible = false
+position = Vector2( 12, 12 )
+scale = Vector2( 0.8, 0.8 )
+texture = ExtResource( 3 )
+
+[node name="QuantumO" type="Sprite" parent="."]
+visible = false
+position = Vector2( 48, 12 )
+scale = Vector2( 0.8, 0.8 )
+texture = ExtResource( 2 )

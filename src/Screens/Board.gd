@@ -92,28 +92,28 @@ var msg_computer_second_move = "The computer finished its quantum moves for that
 
 var msg_human_first_move = "Player O made its first quantum move, now for the second ..."
 var msg_human_second_move = "Player O finished its quantum moves for that round. Now it is player X again."
-var msg_human_turn = "Player X, its your turn. Go ahead and click in a non-classical space for your next quantum move."
+var msg_human_turn = "Player X, its your turn. Click in a non-classical space for your next quantum move."
 
 
-var msg_your_turn = "Go ahead and click in a non-classical space to make your first quantum move of the turn."
-var msg_you_get_to_resolve = """The computer chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+var msg_your_turn = "Click in a non-classical space to make your first quantum move of the turn."
+var msg_you_get_to_resolve = """The computer chose a move that resulted in a conflict, so now some quantum moves need to be resolved into real (or classical) moves.
 
-Some of the earlier possible games are no longer possible, so one resolved space often leads to other spaces being resolved.
+Some earlier quantum games are no longer possible, so one resolved space often leads to other spaces being resolved.
 """
 var msg_you_get_to_resolve_2 = """You get to choose which of the conflict spots the computer should take. Click on a highlighted space to choose.
 """
 
-var msg_you_get_to_resolve_human = """Player O chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves.
+var msg_you_get_to_resolve_human = """Player O chose a move that resulted in a conflict, so now some quantum moves need to be resolved into real (or classical) moves.
 
-Some of the earlier possible games are no longer possible, so one resolved space often leads to other spaces being resolved.
+Some earlier quantum games are no longer possible, so one resolved space often leads to other spaces being resolved.
 """
 var msg_you_get_to_resolve_2_human = """Player X gets to choose which of the conflict spots Player O should take. Click on a highlighted space to choose.
 """
 
-var msg_computer_get_to_resolve = "You chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves."
+var msg_computer_get_to_resolve = "You chose a move that resulted in a conflict, so now some quantum moves need to be resolved into real (or classical) moves."
 var msg_computer_get_to_resolve_2 = "The computer gets to choose which of the conflict spots you should take."
 
-var msg_human_get_to_resolve = "Player X chose a move that resulted in a conflict, so now some of the quantum moves need to be resolved into real (or classical) moves."
+var msg_human_get_to_resolve = "Player X chose a move that resulted in a conflict, so now some quantum moves need to be resolved into real (or classical) moves."
 var msg_human_get_to_resolve_2 = "Player O gets to choose which of the conflict spots Player X should take."
 
 class QuantumNode:
@@ -693,6 +693,63 @@ func set_message_image(img):
 func set_message_image_invisible():
 	$HelpImage1.visible = false
 
+func hide_mini_board():
+	$MiniBoard.visible = false
+	$HidePreviousButton.visible = false
+	$PreviousStateLabel.visible = false
+
+func display_mini_board(gstate):
+	$MiniBoard.visible = true
+	$HidePreviousButton.visible = true
+	$PreviousStateLabel.visible = true
+	var cell_0 = gstate.get_cell_info(0)
+	var cell_1 = gstate.get_cell_info(1)
+	var cell_2 = gstate.get_cell_info(2)
+	var cell_3 = gstate.get_cell_info(3)
+	var cell_4 = gstate.get_cell_info(4)
+	var cell_5 = gstate.get_cell_info(5)
+	var cell_6 = gstate.get_cell_info(6)
+	var cell_7 = gstate.get_cell_info(7)
+	var cell_8 = gstate.get_cell_info(8)
+	display_mini_cell($MiniBoard/Cell0, cell_0)
+	display_mini_cell($MiniBoard/Cell1, cell_1)
+	display_mini_cell($MiniBoard/Cell2, cell_2)
+	display_mini_cell($MiniBoard/Cell3, cell_3)
+	display_mini_cell($MiniBoard/Cell4, cell_4)
+	display_mini_cell($MiniBoard/Cell5, cell_5)
+	display_mini_cell($MiniBoard/Cell6, cell_6)
+	display_mini_cell($MiniBoard/Cell7, cell_7)
+	display_mini_cell($MiniBoard/Cell8, cell_8)
+	
+func display_mini_cell(mini_cell, mini_cell_info):
+	var mini_cell_value = mini_cell_info.get_value()
+	if mini_cell_value == 1:
+		mini_cell.get_node("ClassicalX").visible = true
+		mini_cell.get_node("QuantumX").visible = false
+		mini_cell.get_node("QuantumO").visible = false
+	else:
+		mini_cell.get_node("ClassicalX").visible = false
+		
+	if mini_cell_value == -1:
+		mini_cell.get_node("ClassicalO").visible = true
+		mini_cell.get_node("QuantumX").visible = false
+		mini_cell.get_node("QuantumO").visible = false
+	else:
+		mini_cell.get_node("ClassicalO").visible = false
+		
+	if mini_cell_value == 0:
+		mini_cell.get_node("ClassicalX").visible = false
+		mini_cell.get_node("ClassicalO").visible = false
+		if mini_cell_info.has_quantum_player(1):
+			mini_cell.get_node("QuantumX").visible = true
+		else:
+			mini_cell.get_node("QuantumX").visible = false
+			
+		if mini_cell_info.has_quantum_player(-1):
+			mini_cell.get_node("QuantumO").visible = true
+		else:
+			mini_cell.get_node("QuantumO").visible = false
+
 func clear_help_image():
 	set_message_image(help_image_empty)
 	set_message_image_invisible()
@@ -789,6 +846,7 @@ func update_gui_after_turn(old_turn, new_turn, new_turn_num):
 			make_computer_move()
 	elif new_turn == TURN_X_RESOLVE:
 		resolve_effects()
+		display_mini_board(game_state)
 		if GameSingleton.vs_computer:
 			set_message_1(msg_you_get_to_resolve)
 			set_message_2(msg_you_get_to_resolve_2)
@@ -806,6 +864,7 @@ func update_gui_after_turn(old_turn, new_turn, new_turn_num):
 			set_message_2(msg_human_turn)
 			
 	elif new_turn == TURN_XB:
+		hide_mini_board()
 		$AudioPlayer.stream = first_move_sound
 		$AudioPlayer.play()
 		if new_turn_num == 1:
@@ -971,6 +1030,7 @@ func highlight_victory(classical_board):
 
 
 func end_game(value: int) -> void:
+	hide_mini_board()
 	if value == 1:
 		win_label = "X has won the game!"
 		highlight_victory(game_state.get_classical_board())
@@ -1025,6 +1085,7 @@ func get_gui_cell_by_index(index: int):
 
 func on_cell_clicked(cell: Area2D):
 	if game_state.turn == TURN_X_RESOLVE:
+		display_mini_board(game_state)
 		if game_state.resolve_cells.has(cell.board_index):
 			collapse_move(cell.board_index, game_state.resolve_key)
 			game_state.turn = TURN_XA
@@ -1068,6 +1129,7 @@ func on_cell_clicked(cell: Area2D):
 
 func make_computer_move():
 	if game_state.turn == TURN_O_RESOLVE:
+		display_mini_board(game_state)
 		print("Its resolve mode, so the computer has to play out both scenarios")
 		computer_move_1 = computer_decide_on_resolve_move()
 		print("Computer decided to resolve node ", computer_move_1)
@@ -1587,3 +1649,7 @@ func get_permutations(source_array, target_array):
 	source_array.pop_front()
 	#print("Size of source array ", source_array.size())
 	get_permutations(source_array, target_array)
+
+
+func _on_HidePreviousButton_pressed():
+	hide_mini_board()
