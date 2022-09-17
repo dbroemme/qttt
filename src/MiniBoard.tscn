@@ -42,19 +42,19 @@ position = Vector2( 64, 0 )
 position = Vector2( 124, 0 )
 
 [node name="Cell3" parent="." instance=ExtResource( 2 )]
-position = Vector2( 0, 68 )
+position = Vector2( 0, 64 )
 
 [node name="Cell4" parent="." instance=ExtResource( 2 )]
-position = Vector2( 64, 68 )
+position = Vector2( 64, 64 )
 
 [node name="Cell5" parent="." instance=ExtResource( 2 )]
-position = Vector2( 124, 68 )
+position = Vector2( 124, 64 )
 
 [node name="Cell6" parent="." instance=ExtResource( 2 )]
-position = Vector2( 0, 128 )
+position = Vector2( 0, 126 )
 
 [node name="Cell7" parent="." instance=ExtResource( 2 )]
-position = Vector2( 64, 128 )
+position = Vector2( 64, 126 )
 
 [node name="Cell8" parent="." instance=ExtResource( 2 )]
-position = Vector2( 124, 128 )
+position = Vector2( 124, 126 )

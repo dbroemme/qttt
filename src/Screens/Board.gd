@@ -1224,7 +1224,7 @@ func print_stats(start_time: int) -> void:
 
 
 func _on_HyperLinkButton_pressed():
-	OS.shell_open("https://darren-broemmer.medium.com/")
+	OS.shell_open("https://darren-broemmer.medium.com/quantum-tic-tac-toe-the-best-game-youve-never-played-or-have-you-d689cd110b64")
 
 
 func _on_PlayAgainButton_pressed():
